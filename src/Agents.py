@@ -5,16 +5,29 @@ class Grey_Agent():
     def set_team_alignment(self, proportion):
         return
 
+
 class Red_Agent():
     def __init__(self):
         self.energy = 100
+
+    def get_energy(self) -> int:
+        return self.energy
+
+    def set_energy(self, new_energy: int) -> None:
+        self.energy = new_energy
 
 
 class Blue_Agent():
     def __init__(self):
         self.energy = 100
 
+    def get_energy(self) -> int:
+        return self.energy
 
+    def set_energy(self, new_energy: int) -> None:
+        self.energy = new_energy
+
+        
 class Green_Agent():
     def __init__(self):
         self.will_vote = 0.0
