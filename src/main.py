@@ -13,7 +13,7 @@ class Info_Simulator:
         # TODO:
         # Init num_green agents
         # Apply uncert_ints to will_vote and not_vote
-        # Use connect_prob to create the adjlist of green agents connections
+        # Use connect_prob to create the adjlist of green agents connections with each other
 
         return
 
