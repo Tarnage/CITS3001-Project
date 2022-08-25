@@ -3,20 +3,37 @@ import numpy
 
 class Info_Simulator:
     def __init__(self, num_green: int, uncert_ints: list, connect_prob: list, grey_proportion: int) -> None:
-        self.green_agent_adjlist = self.create_green_agents(num_green, uncert_ints, connect_prob)
         self.red_agent = Agents.Red_Agent()
         self.blue_agent = Agents.Blue_Agent()
         self.grey_agent = Agents.Grey_Agent(grey_proportion)
+        self.green_list = list()
 
+        self.create_green_agents(num_green, connect_prob)
     
-    def create_green_agents(num_green: int, uncert_ints: list, connect_prob: list) -> list:
-        # TODO:
-        # Init num_green agents
-        # Apply uncert_ints to will_vote and not_vote
-        # Use connect_prob to create the adjlist of green agents connections with each other
+    def create_green_agents(self, num_green: int, connect_prob: list) -> None:
 
-        return
+        prob = (connect_prob[0] * connect_prob[1]) / 100
+        
+        # construct num_green of Green Agents
+        for i in range(num_green):
+            new_agent = Agents.Green_Agent(connect_prob)
+            self.green_list.append(new_agent)
 
+        # Check for connections between green agents
+        for i, agent in enumerate(self.green_list):
+
+            for j in range(i+1, num_green):
+
+                # When is j less than i we have already checked those connections
+                # Thats why we start at  i+1
+                
+                agent_1_prob = agent.get_prob_value()
+                agent_2_prob = self.green_list[j].get_prob_value()
+                
+                # check if agent has a connection
+                if (agent_1_prob < prob) and (agent_2_prob < prob):
+                    agent.add_connection(j)
+                    self.green_list[j].add_connection(i)
 
     def run():
 
@@ -24,6 +41,14 @@ class Info_Simulator:
         while not finished:
             break
 
+    
+    def print_green_adjlist(self):
+        for i, agent in enumerate(self.green_list):
+            adj_list = agent.get_connections()
+            print(f"Agent #{i}: ", end="")
+            for j in adj_list:
+                print(f'{j} ', end="")
+            print()
 
 
 if __name__ == "__main__":

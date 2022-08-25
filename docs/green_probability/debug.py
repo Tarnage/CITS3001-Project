@@ -43,7 +43,7 @@ class Green_Agent():
     def get_prob_value(self) -> int:
         # 1000 is chosen for 3 decimal precsion
         # this may cause precision bugs!.. 
-        return rand.randint(0, 1000) / 1000
+        return rand.randint(0, 100) / 100
 
     def get_connections(self) -> list:
         return self.connections
