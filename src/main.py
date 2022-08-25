@@ -1,7 +1,7 @@
 import Agents
 import numpy
 
-class Info_Simulator:
+class InfoSimulator:
     def __init__(self, num_green: int, uncert_ints: list, connect_prob: list, grey_proportion: int) -> None:
         self.red_agent = Agents.Red_Agent()
         self.blue_agent = Agents.Blue_Agent()
@@ -10,6 +10,7 @@ class Info_Simulator:
 
         self.create_green_agents(num_green, connect_prob)
     
+
     def create_green_agents(self, num_green: int, connect_prob: list) -> None:
 
         prob = (connect_prob[0] * connect_prob[1]) / 100
@@ -35,6 +36,7 @@ class Info_Simulator:
                     agent.add_connection(j)
                     self.green_list[j].add_connection(i)
 
+
     def run():
 
         finished = False
@@ -56,12 +58,13 @@ if __name__ == "__main__":
     # Example of current acceptable inputs
     # May change as we learn more and program evolves
     num_green = 10
+    percent_will_vote = 0.5
     broad_interval = [-0.5, 0.5]
     tight_interval = [-0.9, 0.1]
-    connect_prob = [num_green, 0.5] # I think if I can remember probability! the probroablity of num_greens knowing each other is 50%
-    connect_prob = [num_green, 0.1] # num_greens knowing each other is 10%, again might need to confirm n and p values
+    connect_prob = [40, 0.5] # I think if I can remember probability! the probroablity of num_greens knowing each other is 50%
+    connect_prob = [50, 0.1] # num_greens knowing each other is 10%, again might need to confirm n and p values
     grey_proportion_high = 0.8 # 80% chance grey is working for Red team
     grey_proportion_low = 0.1 # 10% chance grey is working for Red team
 
-    sim = Info_Simulator(num_green, broad_interval, connect_prob, grey_proportion_high)
+    sim = InfoSimulator(num_green, broad_interval, connect_prob, grey_proportion_high)
     sim.run()
