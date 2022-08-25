@@ -38,7 +38,7 @@ class Green_Agent():
         self.will_vote = 0.0
         self.not_vote = 0.0
         self.connections = list()
-        
+
     def get_will_vote(self):
         return self.will_vote
 
@@ -46,10 +46,34 @@ class Green_Agent():
         return self.not_vote
 
     def set_will_vote(self, value: int):
-        self.will_vote = value
+        max_min_value = 1.0
+
+        # if val is > 1.0
+        if value > max_min_value:
+            self.will_vote = max_min_value
+        
+        # id val is < -1.0
+        elif value < -max_min_value:
+            self.will_vote = -max_min_value
+
+        # else its a valid value
+        else:
+            self.will_vote = value
 
     def set_not_vote(self, value: int):
-        self.not_vote = value
+        max_min_value = 1.0
+
+        # if val is > 1.0
+        if value > max_min_value:
+            self.not_vote = max_min_value
+        
+        # id val is < -1.0
+        elif value < -max_min_value:
+            self.not_vote = -max_min_value
+
+        # else its a valid value
+        else:
+            self.not_vote = value
 
     def calculate_vote_status(self, interval: list):
         return
