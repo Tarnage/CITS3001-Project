@@ -12,8 +12,9 @@ class InfoSimulator:
     
 
     def create_green_agents(self, num_green: int, connect_prob: list) -> None:
-
-        prob = (connect_prob[0] * connect_prob[1]) / 100
+        n = connect_prob[0]
+        p = connect_prob[1]
+        x = (n*p) / 100
         
         # construct num_green of Green Agents
         for i in range(num_green):
@@ -32,7 +33,7 @@ class InfoSimulator:
                 agent_2_prob = self.green_list[j].get_prob_value()
                 
                 # check if agent has a connection
-                if (agent_1_prob < prob) and (agent_2_prob < prob):
+                if (agent_1_prob < x) and (agent_2_prob < x):
                     agent.add_connection(j)
                     self.green_list[j].add_connection(i)
 
