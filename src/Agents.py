@@ -79,7 +79,7 @@ class Green_Agent():
         return
 
     def get_prob_value(self) -> int:
-        return rand.randint(0, 100) / 100
+        return rand.random()
 
     def get_connections(self) -> list:
         return self.connections
