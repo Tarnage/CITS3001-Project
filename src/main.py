@@ -70,7 +70,7 @@ class InfoSimulator:
 
 
     def print_distrubution_graph(self, display="graph"):
-            # Print the number of connections a vertice has
+            # Print the number of connections a green agent has
             print(nx.degree(self.g))
 
             if display == "graph":
