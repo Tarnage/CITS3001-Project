@@ -113,4 +113,6 @@ if __name__ == "__main__":
     sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_high)
     sim.run()
     #sim.print_distrubution_graph(display="distribution")
-    sim.print_distrubution_graph(display="graph")
+    #sim.print_distrubution_graph(display="graph")
+
+    sim.print_green_adjlist()
