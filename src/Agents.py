@@ -2,8 +2,15 @@ import random as rand
 SEED = 1234
 rand.seed(SEED)
 
+class Agent:
+    def __init__():
+        return
 
-class Grey_Agent():
+    def get_prob_value(self) -> int:
+        return rand.random()
+
+
+class Grey_Agent(Agent):
     def __init__(self, grey_proportion):
         self.team_alignment = self.set_team_alignment(grey_proportion)
 
@@ -11,7 +18,7 @@ class Grey_Agent():
         return
 
 
-class Red_Agent():
+class Red_Agent(Agent):
     def __init__(self):
         self.energy = 100
 
@@ -22,7 +29,7 @@ class Red_Agent():
         self.energy = new_energy
 
 
-class Blue_Agent():
+class Blue_Agent(Agent):
     def __init__(self):
         self.energy = 100
 
@@ -33,7 +40,7 @@ class Blue_Agent():
         self.energy = new_energy
 
         
-class Green_Agent():
+class Green_Agent(Agent):
     def __init__(self):
         self.will_vote = 0.0
         self.not_vote = 0.0
@@ -77,9 +84,6 @@ class Green_Agent():
 
     def calculate_vote_status(self, interval: list):
         return
-
-    def get_prob_value(self) -> int:
-        return rand.random()
 
     def get_connections(self) -> list:
         return self.connections
