@@ -1,9 +1,10 @@
+from turtle import color
 import Agents
 import numpy
 import random as rand
 import networkx as nx
 import matplotlib.pyplot as plt
-
+1
 class InfoSimulator:
     def __init__(self, uncert_ints: list, n: int, p: int, grey_proportion: int) -> None:
         self.red_agent = Agents.Red_Agent()
@@ -16,8 +17,9 @@ class InfoSimulator:
         # Create a graph for modelling
         self.g = nx.Graph()
         self.g.add_nodes_from(range(0, self.n))
-
         self.create_green_agents(self.n, self.p)
+        
+        
 
 
     
@@ -28,6 +30,10 @@ class InfoSimulator:
         for i in range(n):
             new_agent = Agents.Green_Agent()
             self.green_list.append(new_agent)
+            #adding red agent to connect to all
+            self.red_agent.connections.append(new_agent)
+            #connecting the red to everything
+
 
         # Check for connections between green agents
         for i, agent in enumerate(self.green_list):
@@ -54,12 +60,85 @@ class InfoSimulator:
 
 
     def run(self):
+        while self.blue_agent.get_energy() > 0 :
+            self.Red_Turn()
+            self.Blue_Turn()
+            self.Green_Turn()
 
-        finished = False
-        while not finished:
-            break
 
-    
+
+
+    #ill make a game class for this
+    def Red_Turn(self):
+        # give 5 options 
+        opinionGain = [10,15,20,25,30]
+        followerLost = [0,5,10,15,20] # percentage
+        print(opinionGain)
+        print(followerLost)
+        option = int(input("Choose Options 1-5: ") )- 1 
+        
+        # Lose Followers
+        self.Lose_Followers(followerLost[option])
+
+        # Change remaining green opinion
+        self.Change_Opinion(opinionGain[option], False)
+
+        return
+
+    def Blue_Turn(self):
+
+        # give 5 options
+        opinionGain = [10,15,20,25,30]
+        energyLost = [0,5,10,15,20]
+        print(opinionGain)
+        print(energyLost)
+        print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
+        option = int(input("Choose Options 1-5: ") )- 1 
+        # Change green opinion
+        self.Change_Opinion(opinionGain[option], True)
+
+        # Lose Energy
+        self.blue_agent.lose_energy(energyLost[option])
+        
+        #Have option for adding Grey
+        return
+
+    def Green_Turn(self):
+        #set their current side
+        opinionChange = 5 
+        for agent in self.green_list:
+            agent.current_side()
+            #Mingle with eachother and effect opinions
+            for connection in agent.connections:
+                if agent.get_side():
+                    self.green_list[connection].add_vote(opinionChange)
+                else:
+                   self.green_list[connection].add_not_vote(opinionChange)
+
+        # Adding a grey will give it an opinion 
+        return
+
+
+    def Lose_Followers( self , percentage: int):
+        numA = len(self.red_agent.connections)
+        for i in range(int(numA*percentage/100)):
+            #just removing random agents for now
+            node = rand.randrange(numA)
+            self.red_agent.remove_connections(node)
+        return
+
+    def Change_Opinion(self, amount: int, voting: bool):
+        if voting: # affecting everyone for now 
+            for agent in self.green_list:
+                agent.add_vote(amount)
+        else:  
+            for agent in self.red_agent.connections:
+                agent.add_not_vote(amount)
+        return
+
+
+
+
     def print_green_adjlist(self):
         for i, agent in enumerate(self.green_list):
             adj_list = agent.get_connections()

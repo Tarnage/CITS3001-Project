@@ -1,4 +1,5 @@
 import random as rand
+from sqlite3 import connect
 SEED = 1234
 rand.seed(SEED)
 
@@ -20,14 +21,24 @@ class Grey_Agent(Agent):
 
 class Red_Agent(Agent):
     def __init__(self):
-        self.energy = 100
+        #self.energy = 100
+        self.connections = list()
 
-    def get_energy(self) -> int:
-        return self.energy
+    # def get_energy(self) -> int:
+    #     return self.energy
 
-    def set_energy(self, new_energy: int) -> None:
-        self.energy = new_energy
+    # def set_energy(self, new_energy: int) -> None:
+    #     self.energy = new_energy
+    def get_connections(self) -> list:
+        return self.connections
+    
+    def add_connection(self, agent) -> None:
+        self.connections.append(agent)
 
+    def remove_connections(self, ind: int) -> None:
+        self.connections.pop(ind)
+
+            
 
 class Blue_Agent(Agent):
     def __init__(self):
@@ -36,8 +47,8 @@ class Blue_Agent(Agent):
     def get_energy(self) -> int:
         return self.energy
 
-    def set_energy(self, new_energy: int) -> None:
-        self.energy = new_energy
+    def lose_energy(self, energy: int) -> None:
+        self.energy -= energy
 
         
 class Green_Agent(Agent):
@@ -45,12 +56,16 @@ class Green_Agent(Agent):
         self.will_vote = 0.0
         self.not_vote = 0.0
         self.connections = list()
+        self.voting = bool
 
     def get_will_vote(self):
         return self.will_vote
 
     def get_not_vote(self):
         return self.not_vote
+    
+    def get_side(self):
+        return self.voting
 
     def set_will_vote(self, value: int):
         max_min_value = 1.0
@@ -66,7 +81,7 @@ class Green_Agent(Agent):
         # else its a valid value
         else:
             self.will_vote = value
-
+ 
     def set_not_vote(self, value: int):
         max_min_value = 1.0
 
@@ -81,6 +96,18 @@ class Green_Agent(Agent):
         # else its a valid value
         else:
             self.not_vote = value
+
+    def add_vote(self, value : int):
+        self.set_will_vote(self.will_vote + value)
+    
+    def add_not_vote(self, value : int):
+        self.set_not_vote(self.not_vote + value)
+
+    def current_side(self):
+        if self.not_vote < self.will_vote:
+            self.voting = True
+        else:
+            self.voting = False 
 
     def calculate_vote_status(self, interval: list):
         return
