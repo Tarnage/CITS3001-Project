@@ -16,3 +16,29 @@ need to decide:
 
 	
 	NetworkX alternative to get real time view of connections?
+	Tom:
+		We can use networkx to get real time data. Networkx uses matplotlib to show the graph.
+
+		Leave this with me and I'll implement it.
+		
+		Recall Cits3003 Graphics and animation
+		
+		Basically we need to:
+		- Ensure matplotlib doesnt block the program
+		- clear the display
+		- update the information in the graph
+		- reload the display
+
+		Adding:
+		- plot.clf()
+		- will clear the screen
+		
+		- nx.draw()
+		- will update the display
+
+		- plt.show(block=False)
+		- will make sure matplotlib doesnt block
+		
+		
+		
+		
