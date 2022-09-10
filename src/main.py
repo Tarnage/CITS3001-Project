@@ -16,7 +16,7 @@ class InfoSimulator:
                 
         # Create a graph for modelling
         self.g = nx.Graph()
-        self.g.add_nodes_from(range(0, self.n))
+        
         self.create_green_agents(self.n, self.p)
         
         
@@ -26,6 +26,8 @@ class InfoSimulator:
 
     def create_green_agents(self, n: int, p: list) -> None:
         
+        self.green_list = list()
+
         # construct num_green of Green Agents
         for i in range(n):
             new_agent = Agents.Green_Agent()
@@ -62,9 +64,11 @@ class InfoSimulator:
     def run(self):
         while self.blue_agent.get_energy() > 0 :
             self.Red_Turn()
+            self.print_distrubution_graph(display="graph")
             self.Blue_Turn()
+            self.print_distrubution_graph(display="graph")
             self.Green_Turn()
-
+            self.print_distrubution_graph(display="graph")
 
 
 
@@ -83,7 +87,10 @@ class InfoSimulator:
         # Change remaining green opinion
         self.Change_Opinion(opinionGain[option], False)
 
+        self.create_green_agents(self.n, self.p)
+
         return
+
 
     def Blue_Turn(self):
 
@@ -138,6 +145,14 @@ class InfoSimulator:
 
 
 
+    def add_connections(self):
+
+        for i, agent in enumerate(self.green_list):
+            conn_list = agent.get_connections()
+            for conn in conn_list:
+                self.g.add_edge(i, conn)
+
+
 
     def print_green_adjlist(self):
         for i, agent in enumerate(self.green_list):
@@ -149,14 +164,21 @@ class InfoSimulator:
 
 
     def print_distrubution_graph(self, display="graph"):
+            self.g = nx.Graph()
+            self.g.add_nodes_from(range(0, self.n))
+            self.add_connections()
             # Print the number of connections a green agent has
             print(nx.degree(self.g))
 
             if display == "graph":
                 # print the current green network
                 pos = nx.circular_layout(self.g)
+
+                plt.clf()
                 nx.draw(self.g, pos, with_labels=1)
-                plt.show()
+                plt.show(block=False)
+                plt.pause(0.01)
+                
 
             if display == "distribution":
                 # This plot should resemble a bionomoial distribution
@@ -194,4 +216,4 @@ if __name__ == "__main__":
     #sim.print_distrubution_graph(display="distribution")
     #sim.print_distrubution_graph(display="graph")
 
-    sim.print_green_adjlist()
+    #sim.print_green_adjlist()
