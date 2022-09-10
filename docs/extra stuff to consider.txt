@@ -1,22 +1,47 @@
 need to decide:
 	opinion gain
-		Before or after losing followers?
-		Flat amount or changes depending on their current value?	
-		what happens if opinion of both sides are the same?
+		1. Before or after losing followers?
+		2. Flat amount or changes depending on their current value?	
+		3. what happens if opinion of both sides are the same?
+
+		Tom:
+		I assume this is when red team does some sort of propagander? 
+		I think certainity is correlated to opinon. Since if they agree to not vote it means they have a better opinon of Red and vice verser
+
+		1. Maybe something to update after each round. Because Blue and Grey can influence the greens certainity 
+		
+		2. We are to choose how this works. I think the more green that are certain they wont vote will give red a good opinon and vise verser
+
+		3. I think this is an edge case and is very unlikely to happen. But in games you can draw, or we can just roll a dice. Defitnaly something to consider
+
+
 	
 	opinion lost:
 		when will this happen?
+
+		Tom:
+		Same as above
+		
 
 	how much followers/energy lost
 		what type of followers lost? only people who dont agree? or lower chance of people who dont agree 
 			(currently its just anyone randomly)
 
+		Tom:
+		The most intuitive resaoning for me is, if they are extremely certain they will vote.
+
 	Blue agent: 
-		do they affect everyones opinions? or just people who agree with them more? 
+		do they affect everyones opinions? or just people who agree with them more?
+
+		Tom:
+		I think this question was qasked on help forum. 
 
 	
 	NetworkX alternative to get real time view of connections?
 	Tom:
+		I've add made a branch that updates the graph in real time.
+		Right now its very crude and I just quickly added it to show a proof of concept
+
 		We can use networkx to get real time data. Networkx uses matplotlib to show the graph.
 
 		Leave this with me and I'll implement it.
@@ -32,7 +57,7 @@ need to decide:
 		Adding:
 		- plot.clf()
 		- will clear the screen
-		
+
 		- nx.draw()
 		- will update the display
 
