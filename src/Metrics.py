@@ -44,16 +44,27 @@ class Metrics:
                 plt.title("Green Agent Connection Distribution")
                 plt.show()
             
-    def display_red_connections(self, red):
+    def display_connections(self, red, blue, green):
         nx_graph = nx.Graph()
-        nx_graph.add_node("Red")
-        for i in red.connections:
-            nx_graph.add_edge("Red", i)
+        nx_graph.add_node("RED")
+        nx_graph.add_node("BLUE")
+
+        for u, agent in enumerate(green):
+            nx_graph.add_node(u)
+
+            for v in agent.connections:
+                nx_graph.add_edge(u, v)
+
+        for v in red.connections:
+            nx_graph.add_edge("RED", v)
+
+        for v in blue.connections:
+            nx_graph.add_edge("BLUE", v)
 
         # print the current green network
         pos = nx.circular_layout(nx_graph)
 
         plt.clf()
-        nx.draw_networkx(nx_graph, pos, with_labels=1)
+        nx.draw(nx_graph, pos, with_labels=1)
         plt.show(block=False)
         plt.pause(0.01)
