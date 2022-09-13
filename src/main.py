@@ -58,34 +58,46 @@ class InfoSimulator:
 
     def run(self):
         while self.blue_agent.get_energy() > 0 :
-            self.Red_Turn()
-            self.metrics.display_red_connections(self.red_agent)
-            self.red_agent.remove_connections(3)
-            self.Blue_Turn()
+            self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
+            self.red_turn()
+            self.blue_turn()
             #self.metrics.display_network(self.model, display="graph")
-            self.Green_Turn()
+            self.green_turn()
             #self.metrics.display_network(self.model, display="graph")
 
+    def user_input(self):
+        while True:
+            option = input("Choose Options 1-5: ")
+            try:
+                val = int(option)
+                if val > 4:
+                    raise ValueError
+                break
+            except ValueError:
+                print("This is not a number. Please enter a valid number")
+
+        return int(option)-1
 
 
     #ill make a game class for this
-    def Red_Turn(self):
+    def red_turn(self):
         # give 5 options 
         opinionGain = [10,15,20,25,30]
         followerLost = [0,5,10,15,20] # percentage
         print(opinionGain)
         print(followerLost)
-        option = int(input("Choose Options 1-5: ") )- 1 
         
+        option = self.user_input()
+
         # Lose Followers
-        self.Lose_Followers(followerLost[option])
+        self.lose_followers(followerLost[option])
 
         # Change remaining green opinion
-        self.Change_Opinion(opinionGain[option], False)
+        self.change_opinion(opinionGain[option], False)
         return
 
 
-    def Blue_Turn(self):
+    def blue_turn(self):
 
         # give 5 options
         opinionGain = [10,15,20,25,30]
@@ -93,9 +105,10 @@ class InfoSimulator:
         print(opinionGain)
         print(energyLost)
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
-        option = int(input("Choose Options 1-5: ") )- 1 
+        option = self.user_input()
+
         # Change green opinion
-        self.Change_Opinion(opinionGain[option], True)
+        self.change_opinion(opinionGain[option], True)
 
         # Lose Energy
         self.blue_agent.lose_energy(energyLost[option])
@@ -103,7 +116,7 @@ class InfoSimulator:
         #Have option for adding Grey
         return
 
-    def Green_Turn(self):
+    def green_turn(self):
         #set their current side
         opinionChange = 5 
         for agent in self.social_network:
@@ -119,7 +132,7 @@ class InfoSimulator:
         return
 
 
-    def Lose_Followers( self , percentage: int):
+    def lose_followers( self , percentage: int):
         numA = len(self.red_agent.connections)
 
         for i in range(int(numA*percentage/100)):
@@ -130,7 +143,7 @@ class InfoSimulator:
                 self.red_agent.remove_connections(node)
         return
 
-    def Change_Opinion(self, amount: int, voting: bool):
+    def change_opinion(self, amount: int, voting: bool):
         if voting: # affecting everyone for now 
             for i, agent in enumerate(self.social_network):
                         self.social_network[i].add_not_vote(amount)
