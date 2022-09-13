@@ -16,10 +16,6 @@ class InfoSimulator:
         self.n = n
         self.p = p
 
-        self.social_network.append(self.red_agent)
-        self.social_network.append(self.blue_agent)
-        self.social_network.append(self.grey_agent)
-
         # Create a graph for modelling
         self.model = nx.Graph()
         self.create_green_agents(self.n, self.p)
@@ -31,8 +27,9 @@ class InfoSimulator:
             new_agent = Agents.Green_Agent()
             self.social_network.append(new_agent)
             #adding red agent to connect to all
-            self.red_agent.connections.append(new_agent)
+            self.red_agent.connections.append(i)
             #connecting the red to everything
+            self.blue_agent.connections.append(i)
 
 
         # Check for connections between green agents
@@ -42,12 +39,6 @@ class InfoSimulator:
 
                 # When is j less than i we have already checked those connections
                 # Thats why we start at  i+1
-
-                    team_one = agent.get_team()
-                    team_two = self.social_network[j].get_team()
-
-                    if not (team_one == "green") and \
-                       (team_two == "green"):
 
                         agent_1_prob = agent.get_prob_value()
                         agent_2_prob = self.social_network[j].get_prob_value()
@@ -68,11 +59,12 @@ class InfoSimulator:
     def run(self):
         while self.blue_agent.get_energy() > 0 :
             self.Red_Turn()
-            self.metrics.display_network(self.model, display="graph")
+            self.metrics.display_red_connections(self.red_agent)
+            self.red_agent.remove_connections(3)
             self.Blue_Turn()
-            self.metrics.display_network(self.model, display="graph")
+            #self.metrics.display_network(self.model, display="graph")
             self.Green_Turn()
-            self.metrics.display_network(self.model, display="graph")
+            #self.metrics.display_network(self.model, display="graph")
 
 
 
@@ -128,31 +120,27 @@ class InfoSimulator:
 
 
     def Lose_Followers( self , percentage: int):
-        numA = len(self.red_agent.connections) - 1
+        numA = len(self.red_agent.connections)
+
         for i in range(int(numA*percentage/100)):
             #just removing random agents for now
             node = rand.randrange(numA)
-            self.red_agent.remove_connections(node)
+
+            if node in self.red_agent.get_connections():
+                self.red_agent.remove_connections(node)
         return
 
     def Change_Opinion(self, amount: int, voting: bool):
-
         if voting: # affecting everyone for now 
-            for agent in self.social_network:
-                if  not isinstance(agent, Agents.Blue_Agent) and \
-                    not isinstance(agent, Agents.Red_Agent) and \
-                    not isinstance(agent, Agents.Grey_Agent):
-                        agent.add_vote(amount)
+            for i, agent in enumerate(self.social_network):
+                        self.social_network[i].add_not_vote(amount)
         else:  
-            for agent in self.red_agent.connections:
-                agent.add_not_vote(amount)
+            for i, agent in enumerate(self.social_network):
+                self.social_network[i].add_not_vote(amount)
         return
 
-
-
     def add_connections(self):
-
-        for i, agent in enumerate(self.green_list):
+        for i, agent in enumerate(self.social_network):
             conn_list = agent.get_connections()
             for conn in conn_list:
                 self.g.add_edge(i, conn)
