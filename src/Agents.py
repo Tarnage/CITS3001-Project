@@ -1,48 +1,59 @@
 import random as rand
-from sqlite3 import connect
 SEED = 1234
 rand.seed(SEED)
 
 class Agent:
-    def __init__():
+    def __init__(self, team):
+        self.connections = list()
+        self.team = team
         return
 
     def get_prob_value(self) -> int:
         return rand.random()
 
+    def get_connections(self) -> list:
+        return self.connections
+
+    def add_connection(self, agent) -> None:
+        self.connections.append(agent)
+
+    def remove_connections(self, ind: int) -> None:
+        self.connections.remove(ind)
+
+    def get_team(self):
+        return self.team
 
 class Grey_Agent(Agent):
     def __init__(self, grey_proportion):
         self.team_alignment = self.set_team_alignment(grey_proportion)
+        self.active = False
+        super().__init__(team="grey")
 
     def set_team_alignment(self, proportion):
         return
 
+    def set_active(self, status: bool):
+        self.active = status
 
+    def get_active(self):
+        return self.active
+    
 class Red_Agent(Agent):
     def __init__(self):
-        #self.energy = 100
-        self.connections = list()
+        super().__init__(team="red")
+        return
 
     # def get_energy(self) -> int:
     #     return self.energy
 
     # def set_energy(self, new_energy: int) -> None:
     #     self.energy = new_energy
-    def get_connections(self) -> list:
-        return self.connections
-    
-    def add_connection(self, agent) -> None:
-        self.connections.append(agent)
 
-    def remove_connections(self, ind: int) -> None:
-        self.connections.pop(ind)
-
-            
 
 class Blue_Agent(Agent):
     def __init__(self):
         self.energy = 100
+        super().__init__(team="blue")
 
     def get_energy(self) -> int:
         return self.energy
@@ -50,13 +61,13 @@ class Blue_Agent(Agent):
     def lose_energy(self, energy: int) -> None:
         self.energy -= energy
 
-        
+
 class Green_Agent(Agent):
     def __init__(self):
         self.will_vote = 0.0
         self.not_vote = 0.0
-        self.connections = list()
         self.voting = bool
+        super().__init__(team="green")
 
     def get_will_vote(self):
         return self.will_vote
@@ -111,9 +122,3 @@ class Green_Agent(Agent):
 
     def calculate_vote_status(self, interval: list):
         return
-
-    def get_connections(self) -> list:
-        return self.connections
-
-    def add_connection(self, conn: int) -> None:
-        self.connections.append(conn)
