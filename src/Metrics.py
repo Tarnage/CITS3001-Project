@@ -51,7 +51,7 @@ class Metrics:
 
         for u, agent in enumerate(green):
             nx_graph.add_node(u)
-
+            
             for v in agent.connections:
                 nx_graph.add_edge(u, v)
 
