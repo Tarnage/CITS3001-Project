@@ -12,12 +12,10 @@ class InfoSimulator:
         self.blue_agent = Agents.Blue_Agent()
         self.grey_agent = Agents.Grey_Agent(grey_proportion)
         self.metrics = Metrics.Metrics()
-        self.n = n
-        self.p = p
 
         # Create a graph for modelling
         self.model = nx.Graph()
-        self.create_green_agents(uncert_ints, self.n, self.p)
+        self.create_green_agents(uncert_ints, n, p)
 
     def create_green_agents(self, uncernt_ints, n: int, p: list) -> None:
 
@@ -29,7 +27,6 @@ class InfoSimulator:
             self.red_agent.connections.append(i)
             #connecting the red to everything
             self.blue_agent.connections.append(i)
-
 
         # Check for connections between green agents
         for i, agent in enumerate(self.social_network):
