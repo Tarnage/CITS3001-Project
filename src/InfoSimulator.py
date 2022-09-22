@@ -3,6 +3,7 @@ import numpy
 import random as rand
 import networkx as nx
 import Metrics
+import time
 
 
 class InfoSimulator:
@@ -28,12 +29,6 @@ class InfoSimulator:
         for i in range(n):
             new_agent = Agents.Green_Agent(uncernt_ints, i)
             self.social_network.append(new_agent)
-
-            #----------------------Testing uncert values----------------
-            print(f"Agent Social Security Number (ssn): {i}")
-            print(f"Will vote: {new_agent.get_will_vote()}")
-            print(f"Not vote: {new_agent.get_not_vote()}")
-            #--------------------------------------------------------------
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
             if new_agent.get_vote_status() == False:
@@ -108,17 +103,22 @@ class InfoSimulator:
             self.choose_first_move()
 
             while self.blue_agent.get_energy() > 0 :
+                # Updates and prints gloabl values before each turn
                 self.update_vote_status()
                 self.print_vote_status()
                 self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
                 if self.get_current_turn() == "red":
+                    print("Red Agents Turn...")
                     self.red_turn()
                 else:
+                    print("Blue Agents Turn...")
                     self.blue_turn()
                 
                 self.increment_turns()
-                # Greens turn after red and player have had their turns
+                # Greens turn after red and blue have had their turns
                 if self.get_num_turns() % 2 == 0:
+                    print("Green Agents are interacting....")
+                    time.sleep(2)
                     self.green_turn()
                     # TODO: add grey turn
         except KeyboardInterrupt:
