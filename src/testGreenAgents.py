@@ -108,12 +108,12 @@ class TestGreenAgents(unittest.TestCase):
             msg=f"\nMax Test\nExpected: less than or equal to {expected}\nGot: {self.agent.get_not_vote()} ")
 
 
-    def test_get_prob_value(self):
-        got = self.agent.get_prob_value()
+    def test_get_rand(self):
+        got = self.agent.get_rand()
         self.assertTrue(got >= 0, \
             msg=f"\nProbability number test\nExpected: number greater than equal to 0.0\nGot: {got}")
         
-        got = self.agent.get_prob_value()
+        got = self.agent.get_rand()
         self.assertTrue(got <= 1.0, \
             msg=f"\nProbability number test\nExpected: number less than equal to 1.0\nGot: {got}")
 

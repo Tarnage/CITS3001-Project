@@ -17,13 +17,13 @@ class InfoSimulator:
 
         # Create a graph for modelling
         self.model = nx.Graph()
-        self.create_green_agents(self.n, self.p)
+        self.create_green_agents(uncert_ints, self.n, self.p)
 
-    def create_green_agents(self, n: int, p: list) -> None:
+    def create_green_agents(self, uncernt_ints, n: int, p: list) -> None:
 
         # construct num_green of Green Agents
         for i in range(n):
-            new_agent = Agents.Green_Agent()
+            new_agent = Agents.Green_Agent(uncernt_ints)
             self.social_network.append(new_agent)
             #adding red agent to connect to all
             self.red_agent.connections.append(i)
@@ -39,8 +39,8 @@ class InfoSimulator:
                 # When is j less than i we have already checked those connections
                 # Thats why we start at  i+1
 
-                        agent_1_prob = agent.get_prob_value()
-                        agent_2_prob = self.social_network[j].get_prob_value()
+                        agent_1_prob = agent.get_rand()
+                        agent_2_prob = self.social_network[j].get_rand()
                         
                         # check if agent has a connection
                         # we can just compare one agent instead of two.
