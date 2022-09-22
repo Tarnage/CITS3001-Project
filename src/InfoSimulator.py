@@ -32,11 +32,11 @@ class InfoSimulator:
             #----------------------Testing uncert values----------------
             print(f"Agent Social Security Number (ssn): {i}")
             print(f"Will vote: {new_agent.get_will_vote()}")
-            print(f"Not vote: {new_agent.get_will_vote()}")
+            print(f"Not vote: {new_agent.get_not_vote()}")
             #--------------------------------------------------------------
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
-            if new_agent.get_will_vote() == False:
+            if new_agent.get_vote_status() == False:
                 self.red_agent.connections.append(i)
 
             # BLUE HAS A CONNECTION TO EVERYONE
@@ -70,7 +70,7 @@ class InfoSimulator:
 
     def update_vote_status(self):
         for agent in self.social_network:
-            if agent.get_will_vote() == True:
+            if agent.get_vote_status() == True:
                 self.num_will_vote += 1
             else:
                 self.num_not_vote += 1

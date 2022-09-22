@@ -81,13 +81,13 @@ class Green_Agent(Agent):
         self.will_vote = 0.0
         self.not_vote = 0.0
         self.voting = bool
-        self.set_votes(uncert_ints)
+        self.set_uncerts(uncert_ints)
         super().__init__(team="green")
 
     def get_ssn(self):
         return self.ssn
 
-    def set_votes(self, uncert: list):
+    def set_uncerts(self, uncert: list):
         self.set_will_vote(self.get_rand(uncert, uniform=True))
         self.set_not_vote(self.get_rand(uncert, uniform=True))
         self.set_voting()
@@ -98,6 +98,9 @@ class Green_Agent(Agent):
             self.voting = True
         else:
             self.voting = False
+
+    def get_vote_status(self):
+        return self.voting
 
     def get_will_vote(self):
         return self.will_vote
