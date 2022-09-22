@@ -8,8 +8,17 @@ class Agent:
         self.team = team
         return
 
-    def get_prob_value(self) -> int:
-        return rand.random()
+    def get_rand(self, uncert: list, uniform=False) -> float:
+        '''
+        If uniform is false (default) returns a random interval float 0 to 1
+        If uniform is true, unertainty range must be passed to the function and will return a random float between uncernt_int[0] to uncernt_int[1]
+        '''
+        if uniform == True:
+            # TODO: add check for valid input
+            # round to 2 decimal places
+            return round(rand.uniform(uncert[0], uncert[1]), 2)
+        else:
+            return round(rand.random(), 2)
 
     def get_connections(self) -> list:
         return self.connections
@@ -63,11 +72,24 @@ class Blue_Agent(Agent):
 
 
 class Green_Agent(Agent):
-    def __init__(self):
+    def __init__(self, uncert_ints):
         self.will_vote = 0.0
         self.not_vote = 0.0
         self.voting = bool
+        self.set_votes(uncert_ints)
         super().__init__(team="green")
+
+    def set_votes(self, uncert: list):
+        self.set_will_vote(self.get_rand(uncert, uniform=True))
+        self.set_not_vote(self.get_rand(uncert, uniform=True))
+        self.set_voting()
+
+    def set_voting(self):
+        # TODO: comparing float point numbers can add errors
+        if self.will_vote < self.not_vote:
+            self.voting = True
+        else:
+            self.voting = False
 
     def get_will_vote(self):
         return self.will_vote
