@@ -179,10 +179,10 @@ class InfoSimulator:
         #set their current side
         opinionChange = 5 
         for agent in self.social_network:
-            agent.current_side()
+            agent.set_voting()
             #Mingle with eachother and effect opinions
             for connection in agent.connections:
-                if agent.get_side():
+                if agent.get_voting_status():
                     self.social_network[connection].add_vote(opinionChange)
                 else:
                    self.social_network[connection].add_not_vote(opinionChange)

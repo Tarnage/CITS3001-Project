@@ -86,6 +86,15 @@ class Green_Agent(Agent):
 
     def get_ssn(self):
         return self.ssn
+        
+    def get_vote_status(self):
+        return self.voting
+
+    def get_will_vote(self):
+        return self.will_vote
+
+    def get_not_vote(self):
+        return self.not_vote
 
     def set_uncerts(self, uncert: list):
         self.set_will_vote(self.get_rand(uncert, uniform=True))
@@ -98,18 +107,6 @@ class Green_Agent(Agent):
             self.voting = True
         else:
             self.voting = False
-
-    def get_vote_status(self):
-        return self.voting
-
-    def get_will_vote(self):
-        return self.will_vote
-
-    def get_not_vote(self):
-        return self.not_vote
-    
-    def get_side(self):
-        return self.voting
 
     def set_will_vote(self, value: int):
         max_min_value = 1.0
@@ -146,12 +143,3 @@ class Green_Agent(Agent):
     
     def add_not_vote(self, value : int):
         self.set_not_vote(self.not_vote + value)
-
-    def current_side(self):
-        if self.not_vote < self.will_vote:
-            self.voting = True
-        else:
-            self.voting = False 
-
-    def calculate_vote_status(self, interval: list):
-        return
