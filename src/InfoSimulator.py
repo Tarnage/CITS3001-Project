@@ -12,6 +12,11 @@ class InfoSimulator:
         self.blue_agent = Agents.Blue_Agent()
         self.grey_agent = Agents.Grey_Agent(grey_proportion)
         self.metrics = Metrics.Metrics()
+        self.current_turn = ""
+        self.num_turns = 0
+
+        self.num_will_vote = 0
+        self.num_not_vote = 0
 
         # Create a graph for modelling
         self.model = nx.Graph()
@@ -21,11 +26,20 @@ class InfoSimulator:
 
         # construct num_green of Green Agents
         for i in range(n):
-            new_agent = Agents.Green_Agent(uncernt_ints)
+            new_agent = Agents.Green_Agent(uncernt_ints, i)
             self.social_network.append(new_agent)
-            #adding red agent to connect to all
-            self.red_agent.connections.append(i)
-            #connecting the red to everything
+
+            #----------------------Testing uncert values----------------
+            print(f"Agent Social Security Number (ssn): {i}")
+            print(f"Will vote: {new_agent.get_will_vote()}")
+            print(f"Not vote: {new_agent.get_will_vote()}")
+            #--------------------------------------------------------------
+
+            # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
+            if new_agent.get_will_vote() == False:
+                self.red_agent.connections.append(i)
+
+            # BLUE HAS A CONNECTION TO EVERYONE
             self.blue_agent.connections.append(i)
 
         # Check for connections between green agents
@@ -50,16 +64,65 @@ class InfoSimulator:
                             # add to agents adjlist
                             agent.add_connection(j)
                             self.social_network[j].add_connection(i)
+        
+        self.update_vote_status()
+
+
+    def update_vote_status(self):
+        for agent in self.social_network:
+            if agent.get_will_vote() == True:
+                self.num_will_vote += 1
+            else:
+                self.num_not_vote += 1
+
+
+    def print_vote_status(self):
+        print(f"Current Green Population Voting Status:")
+        print(f"Will Vote: {self.num_will_vote}")
+        print(f"Not Vote: {self.num_not_vote}")
+
+
+    def choose_first_move(self):
+        # TODO: allow human players to choose 0 (heads) or 1(tails) 
+        if rand.randint(0, 1) == 0:
+            self.current_turn = "blue"
+        else:
+            self.current_turn = "red"
+
+
+    def get_current_turn(self):
+        return self.current_turn
+
+
+    def get_num_turns(self):
+        return self.num_turns
+
+
+    def increment_turns(self):
+        self.num_turns += 1
 
 
     def run(self):
-        while self.blue_agent.get_energy() > 0 :
-            self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
-            self.red_turn()
-            self.blue_turn()
-            #self.metrics.display_network(self.model, display="graph")
-            self.green_turn()
-            #self.metrics.display_network(self.model, display="graph")
+        try:
+            # Randomly choose who goes first
+            self.choose_first_move()
+
+            while self.blue_agent.get_energy() > 0 :
+                self.update_vote_status()
+                self.print_vote_status()
+                self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
+                if self.get_current_turn() == "red":
+                    self.red_turn()
+                else:
+                    self.blue_turn()
+                
+                self.increment_turns()
+                # Greens turn after red and player have had their turns
+                if self.get_num_turns() % 2 == 0:
+                    self.green_turn()
+                    # TODO: add grey turn
+        except KeyboardInterrupt:
+            print("Ending game...")
 
     def user_input(self):
         while True:

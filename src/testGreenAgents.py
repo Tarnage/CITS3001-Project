@@ -4,7 +4,6 @@ import Agents
 
 class TestGreenAgents(unittest.TestCase):
 
-
     def setUp(self) -> None:
         self.uncert_values = [-0.5, 0.5]
         self.agent = Agents.Green_Agent(self.uncert_values)
