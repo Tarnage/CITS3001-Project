@@ -8,7 +8,7 @@ class Agent:
         self.team = team
         return
 
-    def get_rand(self, uncert: list, uniform=False) -> float:
+    def get_rand(self, uncert=[], uniform=False) -> float:
         '''
         If uniform is false (default) returns a random interval float 0 to 1
         If uniform is true, unertainty range must be passed to the function and will return a random float between uncernt_int[0] to uncernt_int[1]
