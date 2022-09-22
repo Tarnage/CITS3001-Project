@@ -1,6 +1,9 @@
 import random as rand
-SEED = 1234
-rand.seed(SEED)
+from datetime import datetime
+
+SEED_ONE = 1234
+SEED_TWO = 4321
+
 
 class Agent:
     def __init__(self, team):
@@ -16,7 +19,7 @@ class Agent:
         if uniform == True:
             # TODO: add check for valid input
             # round to 2 decimal places
-            return round(rand.uniform(uncert[0], uncert[1]), 2)
+            return round(rand.SystemRandom().uniform(uncert[0], uncert[1]), 2)
         else:
             return round(rand.random(), 2)
 
@@ -31,6 +34,7 @@ class Agent:
 
     def get_team(self):
         return self.team
+
 
 class Grey_Agent(Agent):
     def __init__(self, grey_proportion):
@@ -72,12 +76,16 @@ class Blue_Agent(Agent):
 
 
 class Green_Agent(Agent):
-    def __init__(self, uncert_ints):
+    def __init__(self, uncert_ints, ssn):
+        self.ssn = ssn # ssn is the social security number an int to index the green agent, in the social_network variable
         self.will_vote = 0.0
         self.not_vote = 0.0
         self.voting = bool
         self.set_votes(uncert_ints)
         super().__init__(team="green")
+
+    def get_ssn(self):
+        return self.ssn
 
     def set_votes(self, uncert: list):
         self.set_will_vote(self.get_rand(uncert, uniform=True))
@@ -86,7 +94,7 @@ class Green_Agent(Agent):
 
     def set_voting(self):
         # TODO: comparing float point numbers can add errors
-        if self.will_vote < self.not_vote:
+        if self.get_will_vote() < self.get_not_vote():
             self.voting = True
         else:
             self.voting = False
