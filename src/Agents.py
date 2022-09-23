@@ -108,7 +108,7 @@ class Green_Agent(Agent):
         else:
             self.voting = False
 
-    def set_will_vote(self, value: int):
+    def set_will_vote(self, value: float):
         max_min_value = 1.0
 
         # if val is > 1.0
@@ -123,7 +123,7 @@ class Green_Agent(Agent):
         else:
             self.will_vote = value
  
-    def set_not_vote(self, value: int):
+    def set_not_vote(self, value: float):
         max_min_value = 1.0
 
         # if val is > 1.0
