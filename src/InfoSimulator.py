@@ -89,6 +89,9 @@ class InfoSimulator:
         return self.current_turn
 
 
+    def set_current_turn(self, turn):
+        self.current_turn = turn
+
     def get_num_turns(self):
         return self.num_turns
 
@@ -110,9 +113,11 @@ class InfoSimulator:
                 if self.get_current_turn() == "red":
                     print("Red Agents Turn...")
                     self.red_turn()
+                    self.set_current_turn("blue")
                 else:
                     print("Blue Agents Turn...")
                     self.blue_turn()
+                    self.set_current_turn("red")
                 
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
