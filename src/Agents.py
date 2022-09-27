@@ -9,7 +9,14 @@ class Agent:
     def __init__(self, team):
         self.connections = list()
         self.team = team
+        self.player = False # If True this agent is a human player if False it is AI
         return
+
+    def set_player(self):
+        self.player = True
+
+    def get_player(self):
+        return self.player
 
     def get_rand(self, uncert=[], uniform=False) -> float:
         '''
@@ -74,6 +81,15 @@ class Blue_Agent(Agent):
     def lose_energy(self, energy: int) -> None:
         self.energy -= energy
 
+    def print_moves(self):
+        print("What would the Blue Agent like to do:")
+        print("[0] cost: 0 energy: Do Nothing")
+        print("[1] cost: 10-20 energy")
+        print("[2] cost: 10-30 energy")
+        print("[3] cost: 20-40 energy")
+        print("[4] cost: 30-50 energy")
+        print("[5] cost: 40-50 energy")
+        print("[6] cost: 0 energy: Deploy grey agent")
 
 class Green_Agent(Agent):
     def __init__(self, uncert_ints, ssn):
