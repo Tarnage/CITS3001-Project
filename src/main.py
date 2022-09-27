@@ -8,7 +8,7 @@ if __name__ == "__main__":
     percent_will_vote = 0.5
     broad_interval = [-0.5, 0.5]
     tight_interval = [-0.9, 0.1]
-    connect_prob_1 = [20, 0.4] # I think if I can remember probability! the probroablity of num_greens knowing each other is 50%
+    connect_prob_1 = [10, 0.4] # I think if I can remember probability! the probroablity of num_greens knowing each other is 50%
     connect_prob_2 = [50, 0.1] # num_greens knowing each other is 10%, again might need to confirm n and p values
     grey_proportion_high = 0.8 # 80% chance grey is working for Red team
     grey_proportion_low = 0.1 # 10% chance grey is working for Red team

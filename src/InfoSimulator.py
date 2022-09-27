@@ -45,30 +45,36 @@ class InfoSimulator:
                 # When is j less than i we have already checked those connections
                 # Thats why we start at  i+1
 
-                        agent_1_prob = agent.get_rand()
-                        agent_2_prob = self.social_network[j].get_rand()
-                        
-                        # check if agent has a connection
-                        # we can just compare one agent instead of two.
-                        # We should simulate what happens
-                        if (agent_1_prob < p) and (agent_2_prob < p):
+                agent_1_prob = agent.get_rand()
+                agent_2_prob = self.social_network[j].get_rand()
+                
+                # check if agent has a connection
+                # we can just compare one agent instead of two.
+                # We should simulate what happens
+                if (agent_1_prob < p) and (agent_2_prob < p):
 
-                            # add to g for modelling
-                            self.model.add_edge(i, j)
+                    # add to g for modelling
+                    self.model.add_edge(i, j)
 
-                            # add to agents adjlist
-                            agent.add_connection(j)
-                            self.social_network[j].add_connection(i)
-        
+                    # add to agents adjlist
+                    agent.add_connection(j)
+                    self.social_network[j].add_connection(i)
+
         self.update_vote_status()
 
 
     def update_vote_status(self):
+        will_vote = 0
+        not_vote = 0
+
         for agent in self.social_network:
             if agent.get_vote_status() == True:
-                self.num_will_vote += 1
+                will_vote += 1
             else:
-                self.num_not_vote += 1
+                not_vote += 1
+
+        self.num_will_vote = will_vote
+        self.num_not_vote = not_vote
 
 
     def print_vote_status(self):
@@ -88,17 +94,14 @@ class InfoSimulator:
     def get_current_turn(self):
         return self.current_turn
 
-
     def set_current_turn(self, turn):
         self.current_turn = turn
 
     def get_num_turns(self):
         return self.num_turns
 
-
     def increment_turns(self):
         self.num_turns += 1
-
 
     def run(self):
         try:
@@ -126,15 +129,30 @@ class InfoSimulator:
                     time.sleep(2)
                     self.green_turn()
                     # TODO: add grey turn
+
+            self.check_winner()
+        
         except KeyboardInterrupt:
             print("Ending game...")
 
+
+    def check_winner(self):
+        self.update_vote_status()
+        self.print_vote_status()
+
+        if self.num_will_vote > self.num_not_vote:
+            print("BLUE AGENT WINS!!")
+        elif self.num_will_vote < self.num_not_vote:
+            print("RED AGENT WINS!!")
+        else:
+            print("ITS A TIE!")
+
     def user_input(self):
         while True:
-            option = input("Choose Options 1-5: ")
+            option = input("Choose Options: ")
             try:
                 val = int(option)
-                if val > 4:
+                if val > 6:
                     raise ValueError
                 break
             except ValueError:
@@ -146,10 +164,10 @@ class InfoSimulator:
     #ill make a game class for this
     def red_turn(self):
         # give 5 options 
-        opinionGain = [10,15,20,25,30]
+        opinionGain = [.10,.15,.20,.25,.30]
         followerLost = [0,5,10,15,20] # percentage
-        print(opinionGain)
-        print(followerLost)
+        # print(opinionGain)
+        # print(followerLost)
         
         option = self.user_input()
 
@@ -164,11 +182,15 @@ class InfoSimulator:
     def blue_turn(self):
 
         # give 5 options
-        opinionGain = [10,15,20,25,30]
+        opinionGain = [.10,.15,.20,.25,.30]
         energyLost = [0,5,10,15,20]
-        print(opinionGain)
-        print(energyLost)
+
+        # print(opinionGain)
+        # print(energyLost)
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
+
+        self.blue_agent.print_moves()
+
         option = self.user_input()
 
         # Change green opinion
@@ -182,16 +204,30 @@ class InfoSimulator:
 
     def green_turn(self):
         #set their current side
-        opinionChange = 5 
         for agent in self.social_network:
-            agent.set_voting()
             #Mingle with eachother and effect opinions
             for connection in agent.connections:
-                if agent.get_voting_status():
-                    self.social_network[connection].add_vote(opinionChange)
-                else:
-                   self.social_network[connection].add_not_vote(opinionChange)
+                green_two = self.social_network[connection]
 
+                # if agent is voting it will try to convince others to vote
+                if agent.get_vote_status():
+                    # if agents uncertainty to vote is less then the other agents uncertaintaty to NOT vote he will succeed in
+                    # changing the agents opinion
+                    green_one_uncert = agent.get_will_vote()
+                    green_two_uncert = green_two.get_not_vote()
+
+                    if green_one_uncert < green_two_uncert and not green_two.get_vote_status():
+                        green_two.set_not_vote(green_one_uncert)
+
+                # else agent is not voting will try to convince others to not vote
+                else:
+                    green_one_uncert = agent.get_not_vote()
+                    green_two_uncert = green_two.get_will_vote()
+
+                    if green_one_uncert < green_two_uncert and green_two.get_vote_status():
+                        green_two.set_will_vote(green_one_uncert)
+                
+                green_two.set_voting()
         # Adding a grey will give it an opinion 
         return
 
@@ -205,15 +241,29 @@ class InfoSimulator:
 
             if node in self.red_agent.get_connections():
                 self.red_agent.remove_connections(node)
+                print("RED LOST A FOLLOWER")
         return
 
     def change_opinion(self, amount: int, voting: bool):
         if voting: # affecting everyone for now 
             for i, agent in enumerate(self.social_network):
-                        self.social_network[i].add_not_vote(amount)
+                prev_voting = agent.get_vote_status()
+                agent.add_not_vote(amount)
+                agent.set_voting()
+                new_voting = agent.get_vote_status()
+
+                if not prev_voting == new_voting:
+                    print("Opinion Changed")
+                
         else:  
             for i, agent in enumerate(self.social_network):
-                self.social_network[i].add_not_vote(amount)
+                prev_voting = agent.get_vote_status()
+                agent.add_vote(amount)
+                agent.set_voting()
+                new_voting = agent.get_vote_status()
+
+                if not prev_voting == new_voting:
+                    print("Opinion Changed")
         return
 
     def add_connections(self):
