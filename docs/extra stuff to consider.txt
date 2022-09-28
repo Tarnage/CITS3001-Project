@@ -1,0 +1,44 @@
+need to decide:
+	opinion gain
+		Before or after losing followers?
+		Flat amount or changes depending on their current value?	
+		what happens if opinion of both sides are the same?
+	
+	opinion lost:
+		when will this happen?
+
+	how much followers/energy lost
+		what type of followers lost? only people who dont agree? or lower chance of people who dont agree 
+			(currently its just anyone randomly)
+
+	Blue agent: 
+		do they affect everyones opinions? or just people who agree with them more? 
+
+	
+	NetworkX alternative to get real time view of connections?
+	Tom:
+		We can use networkx to get real time data. Networkx uses matplotlib to show the graph.
+
+		Leave this with me and I'll implement it.
+		
+		Recall Cits3003 Graphics and animation
+		
+		Basically we need to:
+		- Ensure matplotlib doesnt block the program
+		- clear the display
+		- update the information in the graph
+		- reload the display
+
+		Adding:
+		- plot.clf()
+		- will clear the screen
+		
+		- nx.draw()
+		- will update the display
+
+		- plt.show(block=False)
+		- will make sure matplotlib doesnt block
+		
+		
+		
+		
