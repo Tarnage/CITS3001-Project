@@ -1,15 +1,34 @@
 import random as rand
-SEED = 1234
-rand.seed(SEED)
+from datetime import datetime
+
+SEED_ONE = 1234
+SEED_TWO = 4321
+
 
 class Agent:
     def __init__(self, team):
         self.connections = list()
         self.team = team
+        self.player = False # If True this agent is a human player if False it is AI
         return
 
-    def get_prob_value(self) -> int:
-        return rand.random()
+    def set_player(self):
+        self.player = True
+
+    def get_player(self):
+        return self.player
+
+    def get_rand(self, uncert=[], uniform=False) -> float:
+        '''
+        If uniform is false (default) returns a random interval float 0 to 1
+        If uniform is true, unertainty range must be passed to the function and will return a random float between uncernt_int[0] to uncernt_int[1]
+        '''
+        if uniform == True:
+            # TODO: add check for valid input
+            # round to 2 decimal places
+            return round(rand.SystemRandom().uniform(uncert[0], uncert[1]), 2)
+        else:
+            return round(rand.random(), 2)
 
     def get_connections(self) -> list:
         return self.connections
@@ -22,6 +41,7 @@ class Agent:
 
     def get_team(self):
         return self.team
+
 
 class Grey_Agent(Agent):
     def __init__(self, grey_proportion):
@@ -61,24 +81,50 @@ class Blue_Agent(Agent):
     def lose_energy(self, energy: int) -> None:
         self.energy -= energy
 
+    def print_moves(self):
+        print("What would the Blue Agent like to do:")
+        print("[0] cost: 0 energy: Do Nothing")
+        print("[1] cost: 10-20 energy")
+        print("[2] cost: 10-30 energy")
+        print("[3] cost: 20-40 energy")
+        print("[4] cost: 30-50 energy")
+        print("[5] cost: 40-50 energy")
+        print("[6] cost: 0 energy: Deploy grey agent")
 
 class Green_Agent(Agent):
-    def __init__(self):
+    def __init__(self, uncert_ints, ssn):
+        self.ssn = ssn # ssn is the social security number an int to index the green agent, in the social_network variable
         self.will_vote = 0.0
         self.not_vote = 0.0
         self.voting = bool
+        self.set_uncerts(uncert_ints)
         super().__init__(team="green")
+
+    def get_ssn(self):
+        return self.ssn
+        
+    def get_vote_status(self):
+        return self.voting
 
     def get_will_vote(self):
         return self.will_vote
 
     def get_not_vote(self):
         return self.not_vote
-    
-    def get_side(self):
-        return self.voting
 
-    def set_will_vote(self, value: int):
+    def set_uncerts(self, uncert: list):
+        self.set_will_vote(self.get_rand(uncert, uniform=True))
+        self.set_not_vote(self.get_rand(uncert, uniform=True))
+        self.set_voting()
+
+    def set_voting(self):
+        # TODO: comparing float point numbers can add errors
+        if self.get_will_vote() < self.get_not_vote():
+            self.voting = True
+        else:
+            self.voting = False
+
+    def set_will_vote(self, value: float):
         max_min_value = 1.0
 
         # if val is > 1.0
@@ -93,7 +139,7 @@ class Green_Agent(Agent):
         else:
             self.will_vote = value
  
-    def set_not_vote(self, value: int):
+    def set_not_vote(self, value: float):
         max_min_value = 1.0
 
         # if val is > 1.0
@@ -113,12 +159,3 @@ class Green_Agent(Agent):
     
     def add_not_vote(self, value : int):
         self.set_not_vote(self.not_vote + value)
-
-    def current_side(self):
-        if self.not_vote < self.will_vote:
-            self.voting = True
-        else:
-            self.voting = False 
-
-    def calculate_vote_status(self, interval: list):
-        return

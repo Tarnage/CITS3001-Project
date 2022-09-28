@@ -4,20 +4,20 @@ import Agents
 
 class TestGreenAgents(unittest.TestCase):
 
-
     def setUp(self) -> None:
-        self.agent = Agents.Green_Agent()
-
+        self.uncert_values = [-0.5, 0.5]
+        self.agent = Agents.Green_Agent(self.uncert_values)
+        self.expected_will_vote = [0.47, 0.27, -0.26, 0.06]
+        self.expected_not_vote = [-0.26, -0.06, 0.47, 0.27]
 
     def test_constructor(self):
         self.assertTrue(isinstance(self.agent, Agents.Green_Agent))
-
-        expected = 0.0
-        self.assertEqual(self.agent.get_will_vote(), expected, \
-            msg=f"\nExpected: {expected}\nGot: {self.agent.will_vote} ")
-
-        self.assertEqual(self.agent.get_not_vote(), expected, \
-            msg=f"\nExpected: {expected}\nGot: {self.agent.not_vote} ")
+        will_vote = self.agent.get_will_vote() in self.expected_will_vote
+        not_vote = self.agent.get_not_vote() in self.expected_not_vote
+        self.assertTrue(will_vote,
+            msg=f"\nNormal Test\nExpected: A number in {self.expected_not_vote}\nGot: {self.agent.get_will_vote()} ")
+        self.assertTrue(not_vote,
+            msg=f"\nNormal Test\nExpected: {self.expected_not_vote}\nGot: {self.agent.get_not_vote()} ")
 
 
     def test_set_will_vote(self):
@@ -108,12 +108,12 @@ class TestGreenAgents(unittest.TestCase):
             msg=f"\nMax Test\nExpected: less than or equal to {expected}\nGot: {self.agent.get_not_vote()} ")
 
 
-    def test_get_prob_value(self):
-        got = self.agent.get_prob_value()
+    def test_get_rand(self):
+        got = self.agent.get_rand()
         self.assertTrue(got >= 0, \
             msg=f"\nProbability number test\nExpected: number greater than equal to 0.0\nGot: {got}")
         
-        got = self.agent.get_prob_value()
+        got = self.agent.get_rand()
         self.assertTrue(got <= 1.0, \
             msg=f"\nProbability number test\nExpected: number less than equal to 1.0\nGot: {got}")
 
@@ -131,6 +131,14 @@ class TestGreenAgents(unittest.TestCase):
 
         self.assertEqual(adjlist[0], 2, \
             msg=f"\nChecking adjency list\nExpected: {2}\nGot: {adjlist[0]}")
+
+
+    def test_get_rand_uniform(self):
+        will_vote = self.agent.get_will_vote() in self.expected_will_vote
+        not_vote = self.agent.get_not_vote() in self.expected_not_vote
+        self.assertTrue(will_vote)
+        self.assertTrue(not_vote,
+            msg=f"\nNormal Test\nExpected: {self.expected_not_vote}\nGot: {self.agent.get_not_vote()} ")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

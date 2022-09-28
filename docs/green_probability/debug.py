@@ -40,7 +40,7 @@ class Green_Agent():
     def get_prob_index(self) -> int:
         return rand.randint(0, self.n)
 
-    def get_prob_value(self) -> int:
+    def get_rand(self) -> int:
         # 1000 is chosen for 3 decimal precsion
         # this may cause precision bugs!.. 
         return rand.randint(0, 100) / 100
@@ -76,8 +76,8 @@ def create_green_agents(num_green: int, connect_prob: list) -> list:
             # When is j less than i we have already checked those connections
             # Thats why we start at  i+1
             
-            agent_1_prob = agent.get_prob_value()
-            agent_2_prob = green_agents[j].get_prob_value()
+            agent_1_prob = agent.get_rand()
+            agent_2_prob = green_agents[j].get_rand()
             
             # check if agent has a connection
             if (agent_1_prob < prob) and (agent_2_prob < prob):
