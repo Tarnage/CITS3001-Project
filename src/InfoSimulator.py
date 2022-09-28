@@ -6,6 +6,10 @@ import Metrics
 import time
 
 
+'''
+You can quit the game at any time by typing "quit" into the terminal
+'''
+
 class InfoSimulator:
     def __init__(self, uncert_ints: list, n: int, p: int, grey_proportion: int) -> None:
         self.social_network = list()
@@ -151,14 +155,19 @@ class InfoSimulator:
         while True:
             option = input("Choose Options: ")
             try:
-                val = int(option)
-                if val > 6:
-                    raise ValueError
+                if option.isdigit():
+                    if int(option) > 7:
+                        raise ValueError
+                elif option == "quit":
+                    raise Exception
                 break
             except ValueError:
                 print("This is not a number. Please enter a valid number")
+            except Exception:
+                print("Gracefully quiting game")
+                exit(0)
 
-        return int(option)-1
+        return int(option)
 
 
     #ill make a game class for this
