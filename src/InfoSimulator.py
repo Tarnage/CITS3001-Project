@@ -156,7 +156,7 @@ class InfoSimulator:
             option = input("Choose Options: ")
             try:
                 if option.isdigit():
-                    if int(option) > 7:
+                    if int(option) > 6:
                         raise ValueError
                 elif option == "quit":
                     raise Exception
@@ -167,7 +167,7 @@ class InfoSimulator:
                 print("Gracefully quiting game")
                 exit(0)
 
-        return int(option)
+        return int(option)-1
 
 
     #ill make a game class for this
