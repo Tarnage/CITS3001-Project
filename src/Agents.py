@@ -88,10 +88,11 @@ class Blue_Agent(Agent):
     def get_energy(self) -> int:
         return self.energy
 
-    def lose_energy(self, option: int) -> None:
+    def lose_energy(self, option: int) -> float:
         result_range = self.opinion_gain[option]
         energy_lost = self.get_rand(result_range, uniform=True)
         self.energy -= int(energy_lost * 100)
+        return int(energy_lost * 100)
 
     def print_moves(self):
         print("What would the Blue Agent like to do:")
@@ -135,6 +136,21 @@ class Green_Agent(Agent):
     def set_vote_status(self, is_voting: bool):
         self.voting = is_voting
 
+    def update_uncert(self, value: float):
+        max_min_value = 1.0
+
+        # if val is > 1.0
+        if value > max_min_value:
+            self.uncert = max_min_value
+        
+        # id val is < -1.0
+        elif value < -max_min_value:
+            self.uncert = -max_min_value
+
+        # else its a valid value
+        else:
+            self.uncert = value
+
     def set_uncerts(self, uncert: list):
         will_vote = self.get_rand(uncert, uniform=True)
         not_vote = self.get_rand(uncert, uniform=True)
@@ -150,10 +166,7 @@ class Green_Agent(Agent):
         prev_uncert = self.get_uncert_value()
 
         # Update uncertainty values
-        self.uncert = round(self.uncert + value, 2)
-
-        print(f"Before: {prev_uncert}")
-        print(f"After: {prev_uncert}")
+        self.update_uncert(round(self.uncert + value, 2))
 
         # An agent is being influenced to change their voting status
         if not is_voting == prev_voting:

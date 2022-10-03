@@ -13,7 +13,7 @@ if __name__ == "__main__":
     grey_proportion_high = 0.8 # 80% chance grey is working for Red team
     grey_proportion_low = 0.1 # 10% chance grey is working for Red team
 
-    sim = InfoSimulator(tight_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_high)
+    sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low)
     sim.run()
     #sim.print_distrubution_graph(display="distribution")
     #sim.print_distrubution_graph(display="graph")
