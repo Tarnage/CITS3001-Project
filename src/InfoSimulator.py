@@ -23,7 +23,6 @@ class InfoSimulator:
         self.red_agent = Agents.Red_Agent()
         self.blue_agent = Agents.Blue_Agent()
         self.grey_agent = Agents.Grey_Agent(grey_proportion)
-        self.grey_deployed = False
         self.metrics = Metrics.Metrics()
         self.current_turn = ""
         self.num_turns = 0
@@ -144,7 +143,7 @@ class InfoSimulator:
                     time.sleep(2)
                     self.green_turn()
 
-                    if self.grey_deployed:
+                    if self.grey_agent.is_active():
                         self.grey_turn()
 
                     # TODO: add grey turn
@@ -174,7 +173,7 @@ class InfoSimulator:
                 if option.isdigit():
                     if int(option) > 6:
                         raise ValueError
-                    if int(option) == 6 and team == 'blue' and self.grey_deployed == True:
+                    if int(option) == 6 and team == 'blue' and self.grey_agent.is_active():
                         print("Grey Agetn has already been deployed")
                 elif option == "quit":
                     raise Exception
@@ -215,7 +214,7 @@ class InfoSimulator:
             self.deploy_grey_agent()
             self.blue_agent.set_used_grey()
         else:
-            opinion_gain = self.blue_agent.get_opinion_gain(option)
+            opinion_gain = -(self.blue_agent.get_opinion_gain(option))
             # Change green opinion
             self.change_opinion(opinion_gain, True)
             # Lose Energy
@@ -223,7 +222,7 @@ class InfoSimulator:
 
 
     def deploy_grey_agent(self):
-        self.grey_deployed = True
+        self.grey_agent.set_active()
 
 
     def grey_turn(self):
@@ -244,31 +243,37 @@ class InfoSimulator:
     def green_turn(self):
         #set their current side
         for agent in self.social_network:
-            #Mingle with eachother and effect opinions
+            # Mingle with eachother and effect opinions
+            is_voting = agent.get_vote_status()
+            curr_agent_uncert = agent.get_uncert_value()
             for connection in agent.connections:
                 green_two = self.social_network[connection]
+                # if agent is voting it will try to convince others to vote else if will try to convince
+                # changing the agents opinion
+                green_two_uncert = green_two.get_uncert_value()
+                opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
+                green_two.add_unert_values(opinion_change, is_voting)
 
-                # if agent is voting it will try to convince others to vote
-                if agent.get_vote_status():
-                    # if agents uncertainty to vote is less then the other agents uncertaintaty to NOT vote he will succeed in
-                    # changing the agents opinion
-                    green_one_uncert = agent.get_will_vote()
-                    green_two_uncert = green_two.get_not_vote()
 
-                    if green_one_uncert < green_two_uncert and not green_two.get_vote_status():
-                        green_two.set_not_vote(green_one_uncert)
+    def caculate_opinion_change(self, alpha: float, beta: float) -> float:
+        '''
+            Formula: 
+                f(n) = 
+                    (alpha + beta) if beta < 0.0
+                    (alpha - beta) if beta >= 0.0
+                    
+            Params:
+                alpha: float the uncertainty of the influencer
+                beta: float the uncertainty of the agent being influenced
+            
+            Return:
+                result: float value of how much alpha can influence beta
+        '''
 
-                # else agent is not voting will try to convince others to not vote
-                else:
-                    green_one_uncert = agent.get_not_vote()
-                    green_two_uncert = green_two.get_will_vote()
-
-                    if green_one_uncert < green_two_uncert and green_two.get_vote_status():
-                        green_two.set_will_vote(green_one_uncert)
-                
-                green_two.set_voting()
-        # Adding a grey will give it an opinion 
-        return
+        if beta < 0.00:
+            return round(alpha - beta, 2)
+        else:
+            return round(alpha + beta, 2)
 
 
     def lose_followers( self , percentage: int):
@@ -284,51 +289,33 @@ class InfoSimulator:
         return
 
 
-    def change_opinion(self, amount: int, voting: bool):
-        if voting: # affecting everyone for now 
-            for i, agent in enumerate(self.social_network):
-                prev_voting = agent.get_vote_status()
-                agent.add_not_vote(amount)
-                agent.set_voting()
-                new_voting = agent.get_vote_status()
+    def change_opinion(self, amount: float, is_voting: bool):
+        '''
+            This change opinion is used for blue, and grey agents as they can talk to everyone
 
-                if not prev_voting == new_voting:
-                    print("Opinion Changed")
-                
-        else:  
-            for i, agent in enumerate(self.social_network):
-                prev_voting = agent.get_vote_status()
-                agent.add_vote(amount)
-                agent.set_voting()
-                new_voting = agent.get_vote_status()
+        '''
+        for agent in self.social_network:
+            prev_voting = agent.get_vote_status()
+            agent.add_unert_values(amount, is_voting)
+            new_voting = agent.get_vote_status()
 
-                if not prev_voting == new_voting:
-                    print("Opinion Changed")
+            if not prev_voting == new_voting:
+                print("Opinion Changed")
         return
 
 
     # Use this for the minimax it will return the number of greens that have chnaged their opinion
-    def simulate_change_opinion(self, amount: int, voting):
+    def simulate_change_opinion(self, amount: int, is_voting: bool):
         deep_copy = copy.deepcopy(self.social_network)
         num_opinion_change = 0
-        if voting: # affecting everyone for now 
-            for i, agent in deep_copy:
-                prev_voting = agent.get_vote_status()
-                agent.add_not_vote(amount)
-                agent.set_voting()
-                new_voting = agent.get_vote_status()
+        for agent in deep_copy:
+            prev_voting = agent.get_vote_status()
+            agent.add_unert_values(amount, is_voting)
+            new_voting = agent.get_vote_status()
 
-                if not prev_voting == new_voting:
-                    num_opinion_change += 1
-        else:  
-            for i, agent in deep_copy:
-                prev_voting = agent.get_vote_status()
-                agent.add_vote(amount)
-                agent.set_voting()
-                new_voting = agent.get_vote_status()
+            if not prev_voting == new_voting:
+                num_opinion_change += 1
 
-                if not prev_voting == new_voting:
-                    num_opinion_change += 1
         return num_opinion_change
 
 
