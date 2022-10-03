@@ -52,6 +52,9 @@ class Grey_Agent(Agent):
     def set_team_alignment(self, proportion):
         return
 
+    def get_team_alignment(self):
+        return self.team_alignment
+
     def set_active(self, status: bool):
         self.active = status
 
@@ -73,13 +76,17 @@ class Red_Agent(Agent):
 class Blue_Agent(Agent):
     def __init__(self):
         self.energy = 100
+        self.used_grey_agent = False
+        self.opinion_gain = [[0.00, 0.00], [0.00, 0.20], [0.10, 0.30], [0.20, 0.40], [0.30, 0.50], [0.40, 0.50]]
         super().__init__(team="blue")
 
     def get_energy(self) -> int:
         return self.energy
 
-    def lose_energy(self, energy: int) -> None:
-        self.energy -= energy
+    def lose_energy(self, option: int) -> None:
+        result_range = self.opinion_gain[option]
+        energy_lost = self.get_rand(result_range, uniform=True)
+        self.energy -= int(energy_lost * 100)
 
     def print_moves(self):
         print("What would the Blue Agent like to do:")
@@ -89,7 +96,19 @@ class Blue_Agent(Agent):
         print("[3] cost: 20-40 energy")
         print("[4] cost: 30-50 energy")
         print("[5] cost: 40-50 energy")
-        print("[6] cost: 0 energy: Deploy grey agent")
+
+        if not self.used_grey():
+            print("[6] cost: 0 energy: Deploy grey agent")
+    
+    def used_grey(self):
+        return self.used_grey_agent
+
+    def set_used_grey(self):
+        self.used_grey_agent = True
+
+    def get_opinion_gain(self, option: int) -> float:
+        result_range = self.opinion_gain[option]
+        return self.get_rand(result_range, uniform=True)
 
 class Green_Agent(Agent):
     def __init__(self, uncert_ints, ssn):
