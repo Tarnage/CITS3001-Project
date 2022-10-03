@@ -5,13 +5,19 @@ import networkx as nx
 import Metrics
 import time
 import copy
-
+import logging
+from datetime import datetime
 
 BLUE_OPTIONS = {
     "DEPLOY_GREY": 6,
 }
 
+format = '%(message)s'
+folder = f"./logs/"
+logs = folder + datetime.now().strftime("%m.%d.%Y.%H.%M.%S")+'.log'
 
+
+logging.basicConfig(level=logging.INFO, filename=logs, format=format)
 
 '''
 You can quit the game at any time by typing "quit" into the terminal
@@ -33,6 +39,12 @@ class InfoSimulator:
         # Create a graph for modelling
         self.model = nx.Graph()
         self.create_green_agents(uncert_ints, n, p)
+
+        logging.info(f"Game Start:")
+        logging.info(f"\tParameters: ")
+        logging.info(f"\t\t Uncertainty Intervals: [{uncert_ints[0]}, {uncert_ints[1]}]")
+        logging.info(f"\t\t Connection Probability: [{n}, {p}]")
+        logging.info(f"\t\t Grey Proportions: {grey_proportion}")
 
     def create_green_agents(self, uncernt_ints, n: int, p: list) -> None:
 
@@ -92,6 +104,8 @@ class InfoSimulator:
         print(f"Current Green Population Voting Status:")
         print(f"Will Vote: {self.num_will_vote}")
         print(f"Not Vote: {self.num_not_vote}")
+        logging.info(f"\t\tWill Vote: {self.num_will_vote}")
+        logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
 
 
     def choose_first_move(self):
@@ -119,26 +133,36 @@ class InfoSimulator:
             # Randomly choose who goes first
             self.choose_first_move()
 
+            logging.info(f"Turn: {self.num_turns}")
+            logging.info(f"\tWill Vote: {self.num_will_vote}")
+            logging.info(f"\tNot Vote: {self.num_will_vote}")
+
             while self.blue_agent.get_energy() > 0 :
                 # Updates and prints gloabl values before each turn
-                self.update_vote_status()
-                self.print_vote_status()
                 self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
                 time.sleep(2)
                 if self.get_current_turn() == "red":
+                    logging.info("\tRed Agents Turn:")
                     print("Red Agents Turn...")
                     self.red_turn()
                     time.sleep(2)
                     self.set_current_turn("blue")
+                    self.update_vote_status()
+                    self.print_vote_status()
                 else:
+                    logging.info("\tBlue Agents Turn:")
                     print("Blue Agents Turn...")
+                    print(f"Current Energy: {self.blue_agent.get_energy()}")
                     self.blue_turn()
                     time.sleep(2)
                     self.set_current_turn("red")
+                    self.update_vote_status()
+                    self.print_vote_status()
                 
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
                 if self.get_num_turns() % 2 == 0:
+                    logging.info("\tGreen Agents are interacting...")
                     print("Green Agents are interacting....")
                     time.sleep(2)
                     self.green_turn()
@@ -146,11 +170,14 @@ class InfoSimulator:
                     self.print_vote_status()
 
                     if self.grey_agent.is_active():
+                        logging.info("\tThe Grey Agent is making its move:")
                         print("The Grey Agent is making its move....")
                         time.sleep(2)
                         self.grey_turn()
                         self.update_vote_status()
                         self.print_vote_status()
+
+                    logging.info(f"Turn: {self.num_turns // 2}")
 
             self.check_winner()
         
@@ -206,6 +233,10 @@ class InfoSimulator:
 
         # Change remaining green opinion
         self.change_opinion(opinionGain[option], False)
+
+        logging.info(f"\t\tUsing Option: {option}")
+        logging.info(f"\t\tuncertainty: {opinionGain[option]}")
+        logging.info(f"\t\tfollowers lost: {followerLost[option]}")
         return
 
 
@@ -214,15 +245,22 @@ class InfoSimulator:
         self.blue_agent.print_moves()
         option = self.user_input("blue")
 
+        logging.info(f"\t\tUsing Option: {option}")
+
         if option == BLUE_OPTIONS["DEPLOY_GREY"]:
             self.deploy_grey_agent()
             self.blue_agent.set_used_grey()
+            logging.info(f"\t\tDeployed Grey Agent: ({self.grey_agent.get_team_alignment()})")
         else:
             opinion_gain = -(self.blue_agent.get_opinion_gain(option))
+            logging.info(f"\t\tUncertainty Value: {opinion_gain}")
+            logging.info(f"\t\tCurrent Energy: {opinion_gain}")
             # Change green opinion
             self.change_opinion(opinion_gain, True)
             # Lose Energy
-            self.blue_agent.lose_energy(option)
+            energy_lost = self.blue_agent.lose_energy(option)
+            logging.info(f"\t\tEnergy Lost: {energy_lost}")
+            
 
 
     def deploy_grey_agent(self):
