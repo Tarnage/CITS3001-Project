@@ -329,7 +329,7 @@ class InfoSimulator:
 
                 if not prev_voting == new_voting:
                     num_opinion_change += 1
-        return
+        return num_opinion_change
 
 
     def add_connections(self):
