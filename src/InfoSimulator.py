@@ -4,6 +4,13 @@ import random as rand
 import networkx as nx
 import Metrics
 import time
+import copy
+
+
+BLUE_OPTIONS = {
+    "DEPLOY_GREY": 6,
+}
+
 
 
 '''
@@ -16,6 +23,7 @@ class InfoSimulator:
         self.red_agent = Agents.Red_Agent()
         self.blue_agent = Agents.Blue_Agent()
         self.grey_agent = Agents.Grey_Agent(grey_proportion)
+        self.grey_deployed = False
         self.metrics = Metrics.Metrics()
         self.current_turn = ""
         self.num_turns = 0
@@ -117,13 +125,16 @@ class InfoSimulator:
                 self.update_vote_status()
                 self.print_vote_status()
                 self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
+                time.sleep(2)
                 if self.get_current_turn() == "red":
                     print("Red Agents Turn...")
                     self.red_turn()
+                    time.sleep(2)
                     self.set_current_turn("blue")
                 else:
                     print("Blue Agents Turn...")
                     self.blue_turn()
+                    time.sleep(2)
                     self.set_current_turn("red")
                 
                 self.increment_turns()
@@ -132,6 +143,10 @@ class InfoSimulator:
                     print("Green Agents are interacting....")
                     time.sleep(2)
                     self.green_turn()
+
+                    if self.grey_deployed:
+                        self.grey_turn()
+
                     # TODO: add grey turn
 
             self.check_winner()
@@ -151,23 +166,26 @@ class InfoSimulator:
         else:
             print("ITS A TIE!")
 
-    def user_input(self):
+
+    def user_input(self, team: str):
         while True:
             option = input("Choose Options: ")
             try:
                 if option.isdigit():
                     if int(option) > 6:
                         raise ValueError
+                    if int(option) == 6 and team == 'blue' and self.grey_deployed == True:
+                        print("Grey Agetn has already been deployed")
                 elif option == "quit":
                     raise Exception
                 break
             except ValueError:
-                print("This is not a number. Please enter a valid number")
+                print("This is not a number. Please enter a valid number or type 'quit' to close the game")
             except Exception:
                 print("Gracefully quiting game")
                 exit(0)
 
-        return int(option)-1
+        return int(option)
 
 
     #ill make a game class for this
@@ -178,7 +196,7 @@ class InfoSimulator:
         # print(opinionGain)
         # print(followerLost)
         
-        option = self.user_input()
+        option = self.user_input("red")
 
         # Lose Followers
         self.lose_followers(followerLost[option])
@@ -189,27 +207,39 @@ class InfoSimulator:
 
 
     def blue_turn(self):
-
-        # give 5 options
-        opinionGain = [.10,.15,.20,.25,.30]
-        energyLost = [0,5,10,15,20]
-
-        # print(opinionGain)
-        # print(energyLost)
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
-
         self.blue_agent.print_moves()
+        option = self.user_input("blue")
 
-        option = self.user_input()
+        if option == BLUE_OPTIONS["DEPLOY_GREY"]:
+            self.deploy_grey_agent()
+            self.blue_agent.set_used_grey()
+        else:
+            opinion_gain = self.blue_agent.get_opinion_gain(option)
+            # Change green opinion
+            self.change_opinion(opinion_gain, True)
+            # Lose Energy
+            self.blue_agent.lose_energy(option)
 
-        # Change green opinion
-        self.change_opinion(opinionGain[option], True)
 
-        # Lose Energy
-        self.blue_agent.lose_energy(energyLost[option])
+    def deploy_grey_agent(self):
+        self.grey_deployed = True
+
+
+    def grey_turn(self):
+        # Grey has a connection to everyone
+        for green_agent in self.social_network:
         
-        #Have option for adding Grey
-        return
+            if self.grey_agent.get_team_alignment() == "blue":
+                # if green is not voting grey will try to convince to vote
+                if not green_agent.get_vote_status():
+                    pass
+            # grey is a double agent working for red    
+            else:
+                # if green is voting grey will convince them to not vote
+                if green_agent.get_vote_status():
+                    pass
+
 
     def green_turn(self):
         #set their current side
@@ -253,6 +283,7 @@ class InfoSimulator:
                 print("RED LOST A FOLLOWER")
         return
 
+
     def change_opinion(self, amount: int, voting: bool):
         if voting: # affecting everyone for now 
             for i, agent in enumerate(self.social_network):
@@ -274,6 +305,32 @@ class InfoSimulator:
                 if not prev_voting == new_voting:
                     print("Opinion Changed")
         return
+
+
+    # Use this for the minimax it will return the number of greens that have chnaged their opinion
+    def simulate_change_opinion(self, amount: int, voting):
+        deep_copy = copy.deepcopy(self.social_network)
+        num_opinion_change = 0
+        if voting: # affecting everyone for now 
+            for i, agent in deep_copy:
+                prev_voting = agent.get_vote_status()
+                agent.add_not_vote(amount)
+                agent.set_voting()
+                new_voting = agent.get_vote_status()
+
+                if not prev_voting == new_voting:
+                    num_opinion_change += 1
+        else:  
+            for i, agent in deep_copy:
+                prev_voting = agent.get_vote_status()
+                agent.add_vote(amount)
+                agent.set_voting()
+                new_voting = agent.get_vote_status()
+
+                if not prev_voting == new_voting:
+                    num_opinion_change += 1
+        return
+
 
     def add_connections(self):
         for i, agent in enumerate(self.social_network):
