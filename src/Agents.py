@@ -47,15 +47,23 @@ class Grey_Agent(Agent):
     def __init__(self, grey_proportion):
         self.team_alignment = self.set_team_alignment(grey_proportion)
         self.active = False
+        self.uncert = -0.30
         super().__init__(team="grey")
 
     def set_team_alignment(self, proportion):
-        return
+        num = self.get_rand()
+        if num < proportion:
+            return "red"
+        else:
+            return "blue" 
 
-    def set_active(self, status: bool):
-        self.active = status
+    def get_team_alignment(self):
+        return self.team_alignment
 
-    def get_active(self):
+    def set_active(self):
+        self.active = True
+
+    def is_active(self):
         return self.active
     
 class Red_Agent(Agent):
@@ -73,13 +81,18 @@ class Red_Agent(Agent):
 class Blue_Agent(Agent):
     def __init__(self):
         self.energy = 100
+        self.used_grey_agent = False
+        self.opinion_gain = [[0.00, 0.00], [0.00, 0.20], [0.10, 0.30], [0.20, 0.40], [0.30, 0.50], [0.40, 0.50]]
         super().__init__(team="blue")
 
     def get_energy(self) -> int:
         return self.energy
 
-    def lose_energy(self, energy: int) -> None:
-        self.energy -= energy
+    def lose_energy(self, option: int) -> float:
+        result_range = self.opinion_gain[option]
+        energy_lost = self.get_rand(result_range, uniform=True)
+        self.energy -= int(energy_lost * 100)
+        return int(energy_lost * 100)
 
     def print_moves(self):
         print("What would the Blue Agent like to do:")
@@ -89,73 +102,82 @@ class Blue_Agent(Agent):
         print("[3] cost: 20-40 energy")
         print("[4] cost: 30-50 energy")
         print("[5] cost: 40-50 energy")
-        print("[6] cost: 0 energy: Deploy grey agent")
+
+        if not self.used_grey():
+            print("[6] cost: 0 energy: Deploy grey agent")
+    
+    def used_grey(self):
+        return self.used_grey_agent
+
+    def set_used_grey(self):
+        self.used_grey_agent = True
+
+    def get_opinion_gain(self, option: int) -> float:
+        result_range = self.opinion_gain[option]
+        return self.get_rand(result_range, uniform=True)
 
 class Green_Agent(Agent):
     def __init__(self, uncert_ints, ssn):
         self.ssn = ssn # ssn is the social security number an int to index the green agent, in the social_network variable
-        self.will_vote = 0.0
-        self.not_vote = 0.0
+        self.uncert = 0.00
         self.voting = bool
         self.set_uncerts(uncert_ints)
         super().__init__(team="green")
 
     def get_ssn(self):
         return self.ssn
-        
+
+    def get_uncert_value(self):
+        return self.uncert
+
     def get_vote_status(self):
         return self.voting
 
-    def get_will_vote(self):
-        return self.will_vote
+    def set_vote_status(self, is_voting: bool):
+        self.voting = is_voting
 
-    def get_not_vote(self):
-        return self.not_vote
+    def update_uncert(self, value: float):
+        max_min_value = 1.0
+
+        # if val is > 1.0
+        if value > max_min_value:
+            self.uncert = max_min_value
+        
+        # id val is < -1.0
+        elif value < -max_min_value:
+            self.uncert = -max_min_value
+
+        # else its a valid value
+        else:
+            self.uncert = value
 
     def set_uncerts(self, uncert: list):
-        self.set_will_vote(self.get_rand(uncert, uniform=True))
-        self.set_not_vote(self.get_rand(uncert, uniform=True))
-        self.set_voting()
-
-    def set_voting(self):
-        # TODO: comparing float point numbers can add errors
-        if self.get_will_vote() < self.get_not_vote():
-            self.voting = True
+        will_vote = self.get_rand(uncert, uniform=True)
+        not_vote = self.get_rand(uncert, uniform=True)
+        if will_vote < not_vote:
+            self.set_vote_status(True)
+            self.uncert = will_vote
         else:
-            self.voting = False
+            self.set_vote_status(False)
+            self.uncert = not_vote
 
-    def set_will_vote(self, value: float):
-        max_min_value = 1.0
+    def add_unert_values(self, value: float, is_voting: bool):
+        prev_voting = self.get_vote_status()
+        prev_uncert = self.get_uncert_value()
 
-        # if val is > 1.0
-        if value > max_min_value:
-            self.will_vote = max_min_value
+        # Update uncertainty values
+        self.update_uncert(round(self.uncert + value, 2))
+
+        # An agent is being influenced to change their voting status
+        if not is_voting == prev_voting:
+            curr_uncert = self.uncert
+
+            # agent was unsure of their voting status before and now is sure 
+            if prev_uncert >= 0.00 and curr_uncert < 0.00:
+                self.set_vote_status(is_voting)
+                print("Status Changed")
         
-        # id val is < -1.0
-        elif value < -max_min_value:
-            self.will_vote = -max_min_value
-
-        # else its a valid value
         else:
-            self.will_vote = value
- 
-    def set_not_vote(self, value: float):
-        max_min_value = 1.0
-
-        # if val is > 1.0
-        if value > max_min_value:
-            self.not_vote = max_min_value
-        
-        # id val is < -1.0
-        elif value < -max_min_value:
-            self.not_vote = -max_min_value
-
-        # else its a valid value
-        else:
-            self.not_vote = value
-
-    def add_vote(self, value : int):
-        self.set_will_vote(self.will_vote + value)
-    
-    def add_not_vote(self, value : int):
-        self.set_not_vote(self.not_vote + value)
+            # The current green agent is being influenced by 
+            # the side that they are currently on 
+            pass
