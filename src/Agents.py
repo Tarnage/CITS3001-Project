@@ -125,15 +125,6 @@ class Green_Agent(Agent):
 
     def get_ssn(self):
         return self.ssn
-        
-    def get_vote_status(self):
-        return self.voting
-
-    def get_will_vote(self):
-        return self.will_vote
-
-    def get_not_vote(self):
-        return self.not_vote
 
     def get_uncert_value(self):
         return self.uncert
@@ -147,49 +138,6 @@ class Green_Agent(Agent):
         else:
             self.voting = False
             self.uncert = not_vote
-
-    def set_voting(self):
-        # TODO: comparing float point numbers can add errors
-        if self.get_will_vote() < self.get_not_vote():
-            self.voting = True
-        else:
-            self.voting = False
-
-    def set_will_vote(self, value: float):
-        max_min_value = 1.0
-
-        # if val is > 1.0
-        if value > max_min_value:
-            self.will_vote = max_min_value
-        
-        # id val is < -1.0
-        elif value < -max_min_value:
-            self.will_vote = -max_min_value
-
-        # else its a valid value
-        else:
-            self.will_vote = value
- 
-    def set_not_vote(self, value: float):
-        max_min_value = 1.0
-
-        # if val is > 1.0
-        if value > max_min_value:
-            self.not_vote = max_min_value
-        
-        # id val is < -1.0
-        elif value < -max_min_value:
-            self.not_vote = -max_min_value
-
-        # else its a valid value
-        else:
-            self.not_vote = value
-
-    def add_vote(self, value : int):
-        self.set_will_vote(self.will_vote + value)
-    
-    def add_not_vote(self, value : int):
-        self.set_not_vote(self.not_vote + value)
 
     def add_unert_values(self, value: float, is_voting: bool):
         prev_voting = self.get_vote_status()
