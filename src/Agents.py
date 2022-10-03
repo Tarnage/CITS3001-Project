@@ -129,14 +129,20 @@ class Green_Agent(Agent):
     def get_uncert_value(self):
         return self.uncert
 
+    def get_vote_status(self):
+        return self.voting
+
+    def set_vote_status(self, is_voting: bool):
+        self.voting = is_voting
+
     def set_uncerts(self, uncert: list):
         will_vote = self.get_rand(uncert, uniform=True)
         not_vote = self.get_rand(uncert, uniform=True)
-        if will_vote() < not_vote():
-            self.voting = True
+        if will_vote < not_vote:
+            self.set_vote_status(True)
             self.uncert = will_vote
         else:
-            self.voting = False
+            self.set_vote_status(False)
             self.uncert = not_vote
 
     def add_unert_values(self, value: float, is_voting: bool):
@@ -144,7 +150,10 @@ class Green_Agent(Agent):
         prev_uncert = self.get_uncert_value()
 
         # Update uncertainty values
-        self.uncert(round(self.uncert + value, 2))
+        self.uncert = round(self.uncert + value, 2)
+
+        print(f"Before: {prev_uncert}")
+        print(f"After: {prev_uncert}")
 
         # An agent is being influenced to change their voting status
         if not is_voting == prev_voting:
@@ -152,7 +161,8 @@ class Green_Agent(Agent):
 
             # agent was unsure of their voting status before and now is sure 
             if prev_uncert >= 0.00 and curr_uncert < 0.00:
-                self.voting = is_voting
+                self.set_vote_status(is_voting)
+                print("Status Changed")
         
         else:
             # The current green agent is being influenced by 

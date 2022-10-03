@@ -142,11 +142,15 @@ class InfoSimulator:
                     print("Green Agents are interacting....")
                     time.sleep(2)
                     self.green_turn()
+                    self.update_vote_status()
+                    self.print_vote_status()
 
                     if self.grey_agent.is_active():
+                        print("The Grey Agent is making its move....")
+                        time.sleep(2)
                         self.grey_turn()
-
-                    # TODO: add grey turn
+                        self.update_vote_status()
+                        self.print_vote_status()
 
             self.check_winner()
         
@@ -227,17 +231,15 @@ class InfoSimulator:
 
     def grey_turn(self):
         # Grey has a connection to everyone
-        for green_agent in self.social_network:
-        
-            if self.grey_agent.get_team_alignment() == "blue":
-                # if green is not voting grey will try to convince to vote
-                if not green_agent.get_vote_status():
-                    pass
-            # grey is a double agent working for red    
-            else:
-                # if green is voting grey will convince them to not vote
-                if green_agent.get_vote_status():
-                    pass
+        uncert_values = self.grey_agent.uncert
+        is_voting = False
+
+        if self.grey_agent.get_team_alignment() == "blue":
+            is_voting = True
+        else:
+            is_voting = False
+
+        self.change_opinion(uncert_values, is_voting)
 
 
     def green_turn(self):
