@@ -47,18 +47,23 @@ class Grey_Agent(Agent):
     def __init__(self, grey_proportion):
         self.team_alignment = self.set_team_alignment(grey_proportion)
         self.active = False
+        self.uncert = -0.30
         super().__init__(team="grey")
 
     def set_team_alignment(self, proportion):
-        return
+        num = self.get_rand()
+        if num < proportion:
+            return "red"
+        else:
+            return "blue" 
 
     def get_team_alignment(self):
         return self.team_alignment
 
-    def set_active(self, status: bool):
-        self.active = status
+    def set_active(self):
+        self.active = True
 
-    def get_active(self):
+    def is_active(self):
         return self.active
     
 class Red_Agent(Agent):
@@ -113,8 +118,7 @@ class Blue_Agent(Agent):
 class Green_Agent(Agent):
     def __init__(self, uncert_ints, ssn):
         self.ssn = ssn # ssn is the social security number an int to index the green agent, in the social_network variable
-        self.will_vote = 0.0
-        self.not_vote = 0.0
+        self.uncert = 0.00
         self.voting = bool
         self.set_uncerts(uncert_ints)
         super().__init__(team="green")
@@ -131,10 +135,18 @@ class Green_Agent(Agent):
     def get_not_vote(self):
         return self.not_vote
 
+    def get_uncert_value(self):
+        return self.uncert
+
     def set_uncerts(self, uncert: list):
-        self.set_will_vote(self.get_rand(uncert, uniform=True))
-        self.set_not_vote(self.get_rand(uncert, uniform=True))
-        self.set_voting()
+        will_vote = self.get_rand(uncert, uniform=True)
+        not_vote = self.get_rand(uncert, uniform=True)
+        if will_vote() < not_vote():
+            self.voting = True
+            self.uncert = will_vote
+        else:
+            self.voting = False
+            self.uncert = not_vote
 
     def set_voting(self):
         # TODO: comparing float point numbers can add errors
@@ -178,3 +190,23 @@ class Green_Agent(Agent):
     
     def add_not_vote(self, value : int):
         self.set_not_vote(self.not_vote + value)
+
+    def add_unert_values(self, value: float, is_voting: bool):
+        prev_voting = self.get_vote_status()
+        prev_uncert = self.get_uncert_value()
+
+        # Update uncertainty values
+        self.uncert(round(self.uncert + value, 2))
+
+        # An agent is being influenced to change their voting status
+        if not is_voting == prev_voting:
+            curr_uncert = self.uncert
+
+            # agent was unsure of their voting status before and now is sure 
+            if prev_uncert >= 0.00 and curr_uncert < 0.00:
+                self.voting = is_voting
+        
+        else:
+            # The current green agent is being influenced by 
+            # the side that they are currently on 
+            pass
