@@ -69,14 +69,48 @@ class Grey_Agent(Agent):
 class Red_Agent(Agent):
     def __init__(self):
         super().__init__(team="red")
+        self.broadcast_options = [[0.00, 0.00], [0.00, 0.10], [0.10, 0.20], [0.20, 0.30], [0.30, 0.40], [0.40, 0.50]]
+        self.followers = 0
         return
+
+    def increment_followers(self):
+        self.followers += 1
+
+    def decrement_followers(self):
+        self.followers -= 1
+
+    def get_followers(self):
+        return self.followers
     
+    def print_moves(self):
+        print("What would the Red Agent like to do:")
+        print("[0] cost: Do nothing")
+        print("[1] cost: 0-10'%' followers")
+        print("[2] cost: 10-20'%' followers")
+        print("[3] cost: 20-30'%' followers")
+        print("[4] cost: 30-40'%' followers")
+        print("[5] cost: 40-50'%' followers")
 
-    # def get_energy(self) -> int:
-    #     return self.energy
+    def followers_lost(self, option: int, average = False) -> int:
+        range = self.broadcast_options[option]
+        if average:
+            lost_followers = int((range[0]+range[1])/2 * self.followers) #gives average for simulation
+        else:
+            loss_percentage = self.get_rand(range, uniform= True)
+            lost_followers = int(self.followers * loss_percentage)
+        self.followers -= lost_followers
+        return lost_followers
 
-    # def set_energy(self, new_energy: int) -> None:
-    #     self.energy = new_energy
+    def broadcast(self, option: int, average = False) -> float:
+        range = self.broadcast_options[option]
+        if average:
+            amount = (range[0]+range[1])/2
+        else:
+            amount = self.get_rand(range, uniform= True)
+        return amount
+    
+    
+        
 
 
 class Blue_Agent(Agent):
@@ -89,8 +123,11 @@ class Blue_Agent(Agent):
     def get_energy(self) -> int:
         return self.energy
 
-    def lose_energy(self, option: int) -> float:
+    def lose_energy(self, option: int, average = False) -> float:
         result_range = self.opinion_gain[option]
+        if average:
+            return (result_range[0]+result_range[1])/2
+
         energy_lost = self.get_rand(result_range, uniform=True)
         self.energy -= int(energy_lost * 100)
         return int(energy_lost * 100)
@@ -113,8 +150,10 @@ class Blue_Agent(Agent):
     def set_used_grey(self):
         self.used_grey_agent = True
 
-    def get_opinion_gain(self, option: int) -> float:
+    def get_opinion_gain(self, option: int, average = True) -> float:
         result_range = self.opinion_gain[option]
+        if average:
+            return (result_range[0]+result_range[1])/2
         return self.get_rand(result_range, uniform=True)
 
 class Green_Agent(Agent):
