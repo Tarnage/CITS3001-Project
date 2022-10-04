@@ -62,6 +62,7 @@ class Red_Agent(Agent):
     def __init__(self):
         super().__init__(team="red")
         return
+    
 
     # def get_energy(self) -> int:
     #     return self.energy

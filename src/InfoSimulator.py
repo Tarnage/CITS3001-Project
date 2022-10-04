@@ -1,3 +1,4 @@
+from json.encoder import INFINITY
 import Agents
 import numpy
 import random as rand
@@ -280,4 +281,39 @@ class InfoSimulator:
             conn_list = agent.get_connections()
             for conn in conn_list:
                 self.g.add_edge(i, conn)
+
+
+    def minimax(self ,gameState,  node: int, depth: int, Maxteam: bool, side:bool): 
+        #thinking of having it in this file so both teams can call it and both teams can have a view of the current green population
+        #need a heuristic function
+        value = 0 #hehe xD :/ should be based off the heursitic u loser
+    
+
+            #Gamestate needs to be updated to be sent to the Minimax
+
+        if depth == (0):
+            return value #unsure of he value yet
+        elif self.isterminal(node): #blue team is dead  checking gamestate
+            if self.winningMove():
+                return 69696969696
+            else:
+                return -6969696969
+
+        if Maxteam:
+            value = -INFINITY
+            for child in #treee
+        
+        else
+            value = INFINITY
+            for child in:  #treee
+                value = self.minimax(gamestate, child, depth -1,  )
+
+
+        pass
+
+    def isterminal(self):
+        pass
+
+    def winningMove(self):
+        pass
 
