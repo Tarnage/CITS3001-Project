@@ -5,7 +5,20 @@ import random as rand
 import networkx as nx
 import Metrics
 import time
+import copy
+import logging
+from datetime import datetime
 
+BLUE_OPTIONS = {
+    "DEPLOY_GREY": 6,
+}
+
+format = '%(message)s'
+folder = f"./logs/"
+logs = folder + datetime.now().strftime("%m.%d.%Y.%H.%M.%S")+'.log'
+
+
+logging.basicConfig(level=logging.INFO, filename=logs, format=format)
 
 '''
 You can quit the game at any time by typing "quit" into the terminal
@@ -27,6 +40,12 @@ class InfoSimulator:
         # Create a graph for modelling
         self.model = nx.Graph()
         self.create_green_agents(uncert_ints, n, p)
+
+        logging.info(f"Game Start:")
+        logging.info(f"\tParameters: ")
+        logging.info(f"\t\t Uncertainty Intervals: [{uncert_ints[0]}, {uncert_ints[1]}]")
+        logging.info(f"\t\t Connection Probability: [{n}, {p}]")
+        logging.info(f"\t\t Grey Proportions: {grey_proportion}")
 
     def create_green_agents(self, uncernt_ints, n: int, p: list) -> None:
 
@@ -86,6 +105,8 @@ class InfoSimulator:
         print(f"Current Green Population Voting Status:")
         print(f"Will Vote: {self.num_will_vote}")
         print(f"Not Vote: {self.num_not_vote}")
+        logging.info(f"\t\tWill Vote: {self.num_will_vote}")
+        logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
 
 
     def choose_first_move(self):
@@ -113,27 +134,51 @@ class InfoSimulator:
             # Randomly choose who goes first
             self.choose_first_move()
 
+            logging.info(f"Turn: {self.num_turns}")
+            logging.info(f"\tWill Vote: {self.num_will_vote}")
+            logging.info(f"\tNot Vote: {self.num_will_vote}")
+
             while self.blue_agent.get_energy() > 0 :
                 # Updates and prints gloabl values before each turn
-                self.update_vote_status()
-                self.print_vote_status()
                 self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
+                time.sleep(2)
                 if self.get_current_turn() == "red":
+                    logging.info("\tRed Agents Turn:")
                     print("Red Agents Turn...")
                     self.red_turn()
+                    time.sleep(2)
                     self.set_current_turn("blue")
+                    self.update_vote_status()
+                    self.print_vote_status()
                 else:
+                    logging.info("\tBlue Agents Turn:")
                     print("Blue Agents Turn...")
+                    print(f"Current Energy: {self.blue_agent.get_energy()}")
                     self.blue_turn()
+                    time.sleep(2)
                     self.set_current_turn("red")
+                    self.update_vote_status()
+                    self.print_vote_status()
                 
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
                 if self.get_num_turns() % 2 == 0:
+                    logging.info("\tGreen Agents are interacting...")
                     print("Green Agents are interacting....")
                     time.sleep(2)
                     self.green_turn()
-                    # TODO: add grey turn
+                    self.update_vote_status()
+                    self.print_vote_status()
+
+                    if self.grey_agent.is_active():
+                        logging.info("\tThe Grey Agent is making its move:")
+                        print("The Grey Agent is making its move....")
+                        time.sleep(2)
+                        self.grey_turn()
+                        self.update_vote_status()
+                        self.print_vote_status()
+
+                    logging.info(f"Turn: {self.num_turns // 2}")
 
             self.check_winner()
         
@@ -152,23 +197,26 @@ class InfoSimulator:
         else:
             print("ITS A TIE!")
 
-    def user_input(self):
+
+    def user_input(self, team: str):
         while True:
             option = input("Choose Options: ")
             try:
                 if option.isdigit():
                     if int(option) > 6:
                         raise ValueError
+                    if int(option) == 6 and team == 'blue' and self.grey_agent.is_active():
+                        print("Grey Agetn has already been deployed")
                 elif option == "quit":
                     raise Exception
                 break
             except ValueError:
-                print("This is not a number. Please enter a valid number")
+                print("This is not a number. Please enter a valid number or type 'quit' to close the game")
             except Exception:
                 print("Gracefully quiting game")
                 exit(0)
 
-        return int(option)-1
+        return int(option)
 
 
     #ill make a game class for this
@@ -179,67 +227,94 @@ class InfoSimulator:
         # print(opinionGain)
         # print(followerLost)
         
-        option = self.user_input()
+        option = self.user_input("red")
 
         # Lose Followers
         self.lose_followers(followerLost[option])
 
         # Change remaining green opinion
         self.change_opinion(opinionGain[option], False)
+
+        logging.info(f"\t\tUsing Option: {option}")
+        logging.info(f"\t\tuncertainty: {opinionGain[option]}")
+        logging.info(f"\t\tfollowers lost: {followerLost[option]}")
         return
 
 
     def blue_turn(self):
-
-        # give 5 options
-        opinionGain = [.10,.15,.20,.25,.30]
-        energyLost = [0,5,10,15,20]
-
-        # print(opinionGain)
-        # print(energyLost)
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
-
         self.blue_agent.print_moves()
+        option = self.user_input("blue")
 
-        option = self.user_input()
+        logging.info(f"\t\tUsing Option: {option}")
 
-        # Change green opinion
-        self.change_opinion(opinionGain[option], True)
+        if option == BLUE_OPTIONS["DEPLOY_GREY"]:
+            self.deploy_grey_agent()
+            self.blue_agent.set_used_grey()
+            logging.info(f"\t\tDeployed Grey Agent: ({self.grey_agent.get_team_alignment()})")
+        else:
+            opinion_gain = -(self.blue_agent.get_opinion_gain(option))
+            logging.info(f"\t\tUncertainty Value: {opinion_gain}")
+            logging.info(f"\t\tCurrent Energy: {opinion_gain}")
+            # Change green opinion
+            self.change_opinion(opinion_gain, True)
+            # Lose Energy
+            energy_lost = self.blue_agent.lose_energy(option)
+            logging.info(f"\t\tEnergy Lost: {energy_lost}")
+            
 
-        # Lose Energy
-        self.blue_agent.lose_energy(energyLost[option])
-        
-        #Have option for adding Grey
-        return
+
+    def deploy_grey_agent(self):
+        self.grey_agent.set_active()
+
+
+    def grey_turn(self):
+        # Grey has a connection to everyone
+        uncert_values = self.grey_agent.uncert
+        is_voting = False
+
+        if self.grey_agent.get_team_alignment() == "blue":
+            is_voting = True
+        else:
+            is_voting = False
+
+        self.change_opinion(uncert_values, is_voting)
+
 
     def green_turn(self):
         #set their current side
         for agent in self.social_network:
-            #Mingle with eachother and effect opinions
+            # Mingle with eachother and effect opinions
+            is_voting = agent.get_vote_status()
+            curr_agent_uncert = agent.get_uncert_value()
             for connection in agent.connections:
                 green_two = self.social_network[connection]
+                # if agent is voting it will try to convince others to vote else if will try to convince
+                # changing the agents opinion
+                green_two_uncert = green_two.get_uncert_value()
+                opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
+                green_two.add_unert_values(opinion_change, is_voting)
 
-                # if agent is voting it will try to convince others to vote
-                if agent.get_vote_status():
-                    # if agents uncertainty to vote is less then the other agents uncertaintaty to NOT vote he will succeed in
-                    # changing the agents opinion
-                    green_one_uncert = agent.get_will_vote()
-                    green_two_uncert = green_two.get_not_vote()
 
-                    if green_one_uncert < green_two_uncert and not green_two.get_vote_status():
-                        green_two.set_not_vote(green_one_uncert)
+    def caculate_opinion_change(self, alpha: float, beta: float) -> float:
+        '''
+            Formula: 
+                f(n) = 
+                    (alpha + beta) if beta < 0.0
+                    (alpha - beta) if beta >= 0.0
+                    
+            Params:
+                alpha: float the uncertainty of the influencer
+                beta: float the uncertainty of the agent being influenced
+            
+            Return:
+                result: float value of how much alpha can influence beta
+        '''
 
-                # else agent is not voting will try to convince others to not vote
-                else:
-                    green_one_uncert = agent.get_not_vote()
-                    green_two_uncert = green_two.get_will_vote()
-
-                    if green_one_uncert < green_two_uncert and green_two.get_vote_status():
-                        green_two.set_will_vote(green_one_uncert)
-                
-                green_two.set_voting()
-        # Adding a grey will give it an opinion 
-        return
+        if beta < 0.00:
+            return round(alpha - beta, 2)
+        else:
+            return round(alpha + beta, 2)
 
 
     def lose_followers( self , percentage: int):
@@ -254,27 +329,36 @@ class InfoSimulator:
                 print("RED LOST A FOLLOWER")
         return
 
-    def change_opinion(self, amount: int, voting: bool):
-        if voting: # affecting everyone for now 
-            for i, agent in enumerate(self.social_network):
-                prev_voting = agent.get_vote_status()
-                agent.add_not_vote(amount)
-                agent.set_voting()
-                new_voting = agent.get_vote_status()
 
-                if not prev_voting == new_voting:
-                    print("Opinion Changed")
-                
-        else:  
-            for i, agent in enumerate(self.social_network):
-                prev_voting = agent.get_vote_status()
-                agent.add_vote(amount)
-                agent.set_voting()
-                new_voting = agent.get_vote_status()
+    def change_opinion(self, amount: float, is_voting: bool):
+        '''
+            This change opinion is used for blue, and grey agents as they can talk to everyone
 
-                if not prev_voting == new_voting:
-                    print("Opinion Changed")
+        '''
+        for agent in self.social_network:
+            prev_voting = agent.get_vote_status()
+            agent.add_unert_values(amount, is_voting)
+            new_voting = agent.get_vote_status()
+
+            if not prev_voting == new_voting:
+                print("Opinion Changed")
         return
+
+
+    # Use this for the minimax it will return the number of greens that have chnaged their opinion
+    def simulate_change_opinion(self, amount: int, is_voting: bool):
+        deep_copy = copy.deepcopy(self.social_network)
+        num_opinion_change = 0
+        for agent in deep_copy:
+            prev_voting = agent.get_vote_status()
+            agent.add_unert_values(amount, is_voting)
+            new_voting = agent.get_vote_status()
+
+            if not prev_voting == new_voting:
+                num_opinion_change += 1
+
+        return num_opinion_change
+
 
     def add_connections(self):
         for i, agent in enumerate(self.social_network):
