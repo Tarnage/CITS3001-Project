@@ -226,7 +226,7 @@ class InfoSimulator:
         # print(followerLost)
         
         #option = self.user_input("red")
-        option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 4, True)[0]
+        option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         print("Choosing option :" + str(option))
         # Lose Followers
         lost = self.red_agent.followers_lost(option)

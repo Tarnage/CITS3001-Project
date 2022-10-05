@@ -154,7 +154,7 @@ class Blue_Agent(Agent):
         result_range = self.opinion_gain[option]
         if average:
             return (result_range[0]+result_range[1])/2
-        return self.get_rand(result_range, uniform=True)
+        return round(self.get_rand(result_range, uniform=True), 2)
 
 class Green_Agent(Agent):
     def __init__(self, uncert_ints, ssn):
