@@ -7,6 +7,7 @@ import time
 import copy
 import logging
 from datetime import datetime
+import math
 
 BLUE_OPTIONS = {
     "DEPLOY_GREY": 6,
@@ -33,35 +34,37 @@ class InfoSimulator:
         self.current_turn = ""
         self.num_turns = 0
 
+        self.uncert_ints = uncert_ints
+        self.n = n
+        self.p = p
+        self.grey_proportion = grey_proportion
+
         self.num_will_vote = 0
         self.num_not_vote = 0
 
         # Create a graph for modelling
         self.model = nx.Graph()
-        self.create_green_agents(uncert_ints, n, p)
+        self.social_network = self.create_green_agents(uncert_ints, n, p)
 
-        logging.info(f"Game Start:")
-        logging.info(f"\tParameters: ")
-        logging.info(f"\t\t Uncertainty Intervals: [{uncert_ints[0]}, {uncert_ints[1]}]")
-        logging.info(f"\t\t Connection Probability: [{n}, {p}]")
-        logging.info(f"\t\t Grey Proportions: {grey_proportion}")
 
-    def create_green_agents(self, uncernt_ints, n: int, p: list) -> None:
 
+    def create_green_agents(self, uncernt_ints, n: int, p: list) -> list:
+        social_network = list()
         # construct num_green of Green Agents
         for i in range(n):
             new_agent = Agents.Green_Agent(uncernt_ints, i)
-            self.social_network.append(new_agent)
+            social_network.append(new_agent)
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
             if new_agent.get_vote_status() == False:
                 self.red_agent.connections.append(i)
+                self.red_agent.increment_followers() #increment followers
 
             # BLUE HAS A CONNECTION TO EVERYONE
             self.blue_agent.connections.append(i)
 
         # Check for connections between green agents
-        for i, agent in enumerate(self.social_network):
+        for i, agent in enumerate(social_network):
 
             for j in range(i+1, n):
 
@@ -69,7 +72,7 @@ class InfoSimulator:
                 # Thats why we start at  i+1
 
                 agent_1_prob = agent.get_rand()
-                agent_2_prob = self.social_network[j].get_rand()
+                agent_2_prob = social_network[j].get_rand()
                 
                 # check if agent has a connection
                 # we can just compare one agent instead of two.
@@ -81,10 +84,11 @@ class InfoSimulator:
 
                     # add to agents adjlist
                     agent.add_connection(j)
-                    self.social_network[j].add_connection(i)
+                    social_network[j].add_connection(i)
 
         self.update_vote_status()
 
+        return social_network
 
     def update_vote_status(self):
         will_vote = 0
@@ -129,6 +133,11 @@ class InfoSimulator:
         self.num_turns += 1
 
     def run(self):
+        logging.info(f"Game Start:")
+        logging.info(f"\tParameters: ")
+        logging.info(f"\t\t Uncertainty Intervals: [{self.uncert_ints[0]}, {self.uncert_ints[1]}]")
+        logging.info(f"\t\t Connection Probability: [{self.n}, {self.p}]")
+        logging.info(f"\t\t Grey Proportions: {self.grey_proportion}")
         try:
             # Randomly choose who goes first
             self.choose_first_move()
@@ -218,25 +227,25 @@ class InfoSimulator:
         return int(option)
 
 
-    #ill make a game class for this
     def red_turn(self):
         # give 5 options 
-        opinionGain = [.10,.15,.20,.25,.30]
-        followerLost = [0,5,10,15,20] # percentage
         # print(opinionGain)
         # print(followerLost)
         
-        option = self.user_input("red")
-
+        #option = self.user_input("red")
+        option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
+        print("Choosing option :" + str(option))
         # Lose Followers
-        self.lose_followers(followerLost[option])
+        lost = self.red_agent.followers_lost(option)
+        self.lose_followers(lost)
 
         # Change remaining green opinion
-        self.change_opinion(opinionGain[option], False)
+        amount = self.red_agent.broadcast(option)
+        self.change_opinion(amount , False)
 
         logging.info(f"\t\tUsing Option: {option}")
-        logging.info(f"\t\tuncertainty: {opinionGain[option]}")
-        logging.info(f"\t\tfollowers lost: {followerLost[option]}")
+        logging.info(f"\t\tuncertainty: {self.red_agent.broadcast_options[option]}")
+        logging.info(f"\t\tfollowers lost: {self.red_agent.broadcast_options[option]}")
         return
 
 
@@ -325,6 +334,7 @@ class InfoSimulator:
 
             if node in self.red_agent.get_connections():
                 self.red_agent.remove_connections(node)
+                self.red_agent.decrement_followers()
                 print("RED LOST A FOLLOWER")
         return
 
@@ -344,9 +354,9 @@ class InfoSimulator:
         return
 
 
+
     # Use this for the minimax it will return the number of greens that have chnaged their opinion
-    def simulate_change_opinion(self, amount: int, is_voting: bool):
-        deep_copy = copy.deepcopy(self.social_network)
+    def simulate_change_opinion(self, deep_copy, amount: int, is_voting: bool):
         num_opinion_change = 0
         for agent in deep_copy:
             prev_voting = agent.get_vote_status()
@@ -355,9 +365,22 @@ class InfoSimulator:
 
             if not prev_voting == new_voting:
                 num_opinion_change += 1
-
+        #dont need return yet
         return num_opinion_change
 
+    def simulate_red_lost(self, red, option):
+        #will need to do a deepcopy agent and so that different routes could be taken.
+        # will use AVERAGE amounts (possibly take into consideration, min and max interval if we change it from a flat amount. )
+        red.followers_lost(option, average = True) 
+        return red.broadcast(option, average = True) 
+        
+
+    def simulate_blue_energy(self, blueAgent, option):
+        blueAgent.lose_energy(option, average = True)
+        return blueAgent.get_opinion_gain(option, average = True)
+
+    def simulate_green_turn(self):
+        pass
 
     def add_connections(self):
         for i, agent in enumerate(self.social_network):
@@ -365,3 +388,85 @@ class InfoSimulator:
             for conn in conn_list:
                 self.g.add_edge(i, conn)
 
+    def minimaxRed(self, green: list, blue: Agents.Blue_Agent, red: Agents.Red_Agent, depth: int, Maxteam: bool) -> tuple: 
+        #maxteam false - blues turn
+        #thinking of having it in this file so both teams can call it and both teams can have a view of the current green population EDIT: just doing red first
+        #need a heuristic function
+        #Gamestate needs to be updated to be sent to the Minimax, should present copy of social network
+        if self.isterminal(blue): #blue team is dead  checking gamestate, basically the only terminal node is if the blue is dead. 
+            if self.RedWinning(green):
+                return (-1, 100000000)
+            else:
+                return (-1,-100000000)
+        elif depth == (0):
+            return (-1,self.evaluateState(green, red, blue))
+
+
+        if Maxteam:
+            value = math.inf
+            choice =  rand.randint(0,6)
+            for option in range(len(red.broadcast_options)): 
+                print(option)
+                green_Copy = copy.deepcopy(green)
+                red_Copy = copy.deepcopy(red)        
+                opinion_change = self.simulate_red_lost(red_Copy, option)
+                self.simulate_change_opinion(green_Copy, opinion_change, False)
+                new_score = self.minimaxRed(green_Copy, blue, red_Copy, depth-1, 0)
+
+                if new_score[1] < value:
+                    value = new_score[1]
+                    if new_score[0] == -1:
+                        choice = option
+                    else:
+                        choice = new_score[0]
+            return (choice, value)
+        
+        else:
+            value = -math.inf
+            choice =  rand.randint(0,6)
+            for option in range(len(blue.opinion_gain)): 
+                green_Copy = copy.deepcopy(green)
+                blue_Copy = copy.deepcopy(blue)
+                opinion_change = self.simulate_blue_energy(blue_Copy, option)
+                self.simulate_change_opinion(green_Copy, opinion_change, True)
+                new_score = self.minimaxRed(green_Copy, blue_Copy, red, depth -1, 1)
+
+                if new_score[1] > value:
+                    value = new_score[1]
+                    if new_score[0] == None:
+                        choice = option
+                    else:
+                        choice = new_score[0]
+            return (choice, value)
+        
+
+    def isterminal(self, blue):
+        if blue.get_energy() == 0: #need to also check if they have a grey agent left still
+            return True
+        return False
+        #check if blue is dead. 
+
+    def RedWinning(self, network: list) -> bool:
+        redFollowers = 0
+        blueFollowers = 0
+        for agent in network:
+            if agent.get_vote_status():
+                blueFollowers += 1
+            else:
+                redFollowers += 1
+        return redFollowers > blueFollowers #winning move
+
+    def evaluateState(self, greenNetwork, red, blue):
+        #evaluate who is currently winning and return a point value 
+        points = 0
+        for agent in greenNetwork:
+            if agent.get_vote_status():
+                points -= 5
+            else: 
+                points += 5
+        
+        points += int((100-blue.get_energy())/10) #less energy, better for red?
+
+        points += red.get_followers()
+
+        return points
