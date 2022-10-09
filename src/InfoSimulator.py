@@ -117,6 +117,9 @@ class InfoSimulator:
         print(f"Current Green Population Voting Status:")
         print(f"Will Vote: {self.num_will_vote}")
         print(f"Not Vote: {self.num_not_vote}")
+
+    
+    def log_current_votes(self):
         logging.info(f"\t\tWill Vote: {self.num_will_vote}")
         logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
 
@@ -162,8 +165,7 @@ class InfoSimulator:
             finished = False
 
             while not finished:
-
-
+                
                 # Updates and prints gloabl values before each turn
                 self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
                 #time.sleep(2)
@@ -175,6 +177,7 @@ class InfoSimulator:
                     self.set_current_turn("blue")
                     self.update_vote_status()
                     self.print_vote_status()
+                    self.log_current_votes()
                 else:
                     logging.info("\tBlue Agents Turn:")
                     print("Blue Agents Turn...")
@@ -183,6 +186,7 @@ class InfoSimulator:
                     self.set_current_turn("red")
                     self.update_vote_status()
                     self.print_vote_status()
+                    self.log_current_votes()
                 
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
@@ -194,6 +198,7 @@ class InfoSimulator:
                     self.green_turn()
                     self.update_vote_status()
                     self.print_vote_status()
+                    self.log_current_votes()
 
                     if self.grey_agent.is_active():
                         logging.info("\tThe Grey Agent is making its move:")
@@ -202,15 +207,14 @@ class InfoSimulator:
                         self.grey_turn()
                         self.update_vote_status()
                         self.print_vote_status()
-
-                    logging.info(f"Turn: {(self.num_turns//2)+1}")
-
+                        self.log_current_votes()
                 
-                if self.blue_agent.get_energy() < 0 and self.get_num_turns() % 2 == 0:
-                    self.check_winner()
-                    finished = True
+                    if self.blue_agent.get_energy() < 0 and self.get_num_turns() % 2 == 0:
+                        self.check_winner()
+                        finished = True
+                    else:
+                        logging.info(f"Turn: {(self.num_turns//2)+1}")
 
-        
         except KeyboardInterrupt:
             print("Ending game...")
 
