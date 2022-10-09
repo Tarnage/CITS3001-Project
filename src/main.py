@@ -1,4 +1,8 @@
 from InfoSimulator import *
+import sys
+
+# Redirecting the print function to the void
+sys.stdout = open(os.devnull, 'w')
 
 if __name__ == "__main__":
 
