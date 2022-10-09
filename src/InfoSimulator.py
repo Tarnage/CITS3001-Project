@@ -10,7 +10,6 @@ from datetime import datetime
 import math
 import os
 
-
 BLUE_OPTIONS = {
     "DEPLOY_GREY": 6,
 }
@@ -155,22 +154,24 @@ class InfoSimulator:
         try:
             # Randomly choose who goes first
             self.choose_first_move()
-
+            logging.info(f"\t\tWill Vote: {self.num_will_vote}")
+            logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
             logging.info(f"Turn: {self.num_turns+1}")
-            logging.info(f"\tWill Vote: {self.num_will_vote}")
-            logging.info(f"\tNot Vote: {self.num_not_vote}\n")
+            
 
-            while self.blue_agent.get_energy() > 0 :
+            finished = False
+
+            while not finished:
 
 
                 # Updates and prints gloabl values before each turn
                 self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
-                time.sleep(2)
+                #time.sleep(2)
                 if self.get_current_turn() == "red":
                     logging.info("\tRed Agents Turn:")
                     print("Red Agents Turn...")
                     self.red_turn()
-                    time.sleep(2)
+                    #time.sleep(2)
                     self.set_current_turn("blue")
                     self.update_vote_status()
                     self.print_vote_status()
@@ -178,7 +179,7 @@ class InfoSimulator:
                     logging.info("\tBlue Agents Turn:")
                     print("Blue Agents Turn...")
                     self.blue_turn()
-                    time.sleep(2)
+                    #time.sleep(2)
                     self.set_current_turn("red")
                     self.update_vote_status()
                     self.print_vote_status()
@@ -186,9 +187,10 @@ class InfoSimulator:
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
                 if self.get_num_turns() % 2 == 0:
+
                     logging.info("\tGreen Agents are interacting...")
                     print("Green Agents are interacting....")
-                    time.sleep(2)
+                    #time.sleep(2)
                     self.green_turn()
                     self.update_vote_status()
                     self.print_vote_status()
@@ -196,14 +198,18 @@ class InfoSimulator:
                     if self.grey_agent.is_active():
                         logging.info("\tThe Grey Agent is making its move:")
                         print("The Grey Agent is making its move....")
-                        time.sleep(2)
+                        #time.sleep(2)
                         self.grey_turn()
                         self.update_vote_status()
                         self.print_vote_status()
 
                     logging.info(f"Turn: {(self.num_turns//2)+1}")
 
-            self.check_winner()
+                
+                if self.blue_agent.get_energy() < 0 and self.get_num_turns() % 2 == 0:
+                    self.check_winner()
+                    finished = True
+
         
         except KeyboardInterrupt:
             print("Ending game...")
@@ -284,9 +290,9 @@ class InfoSimulator:
 
     def blue_turn(self):
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
-        self.blue_agent.print_moves()
-        option = self.user_input("blue")
-
+        #self.blue_agent.print_moves()
+        #option = self.user_input("blue")
+        option = rand.randint(0, 5)
         logging.info(f"\t\tUsing Option: {option}")
 
         if option == BLUE_OPTIONS["DEPLOY_GREY"]:
