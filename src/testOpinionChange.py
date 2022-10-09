@@ -27,7 +27,7 @@ class TestGreenAgents(unittest.TestCase):
         return 
 
 
-    def test_add_uncert(self):
+    def test_red_influence_more_uncertain_no_change(self):
         alpha = -0.6
         red_voting = False
         beta = -0.3
@@ -36,15 +36,57 @@ class TestGreenAgents(unittest.TestCase):
         self.green_one.voting = green_voting
         
         result = self.sim.caculate_opinion_change(alpha, beta)
-
         self.assertAlmostEqual(result, -0.3)
 
         self.green_one.add_unert_values(result, red_voting)
         uncert = self.green_one.get_uncert_value()
         voting = self.green_one.get_vote_status()
+        self.assertEqual(voting, green_voting, "Green is less sure of current vote but hasnt change its mind")
+        self.assertAlmostEqual(uncert, -0.00, msg="Green becomes less uncertain about voting")
 
-        print(f'\nIs voting: {voting}: OPINION NOW: {uncert}')
+        #print(f'\nIs voting: {voting}: OPINION NOW: {uncert}')
         
+    def test_red_influence_no_change(self):
+        alpha = -0.6
+        red_voting = False
+        beta = -0.6
+        green_voting = False
+        self.green_one.uncert = beta
+        self.green_one.voting = green_voting
+        
+        result = self.sim.caculate_opinion_change(alpha, beta)
+        self.assertAlmostEqual(result, 0.0)
+
+
+        self.green_one.add_unert_values(result, red_voting)
+        uncert = self.green_one.get_uncert_value()
+        voting = self.green_one.get_vote_status()
+        self.assertEqual(voting, green_voting, "Green no change")
+        self.assertAlmostEqual(uncert, -0.6, msg="Green no change")
+
+    def test_red_influence_change_voting(self):
+
+        alpha = -0.6
+        red_voting = False
+        beta = 0.3
+        green_voting = True
+        self.green_one.uncert = beta
+        self.green_one.voting = green_voting
+        
+        result = self.sim.caculate_opinion_change(alpha, beta)
+        self.assertAlmostEqual(result, -0.3)
+
+        self.green_one.add_unert_values(result, red_voting)
+        uncert = self.green_one.get_uncert_value()
+
+        self.assertAlmostEqual(uncert, 0.0, msg="Failed to add the proper uncertainty")
+
+        voting = self.green_one.get_vote_status()
+        self.assertEqual(voting, green_voting, "Green no change")
+        self.assertAlmostEqual(uncert, 0.0, msg="Green no change")
+
+
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
