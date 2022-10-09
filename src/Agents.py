@@ -130,8 +130,8 @@ class Blue_Agent(Agent):
             return (result_range[0]+result_range[1])/2
 
         energy_lost = self.get_rand(result_range, uniform=True)
-        self.energy += int(energy_lost * 100)
-        return int(energy_lost * 100)
+        self.energy += int(energy_lost * 100 // 2)
+        return int(energy_lost * 100 // 2)
 
     def print_moves(self):
         print("What would the Blue Agent like to do:")
@@ -169,7 +169,7 @@ class Green_Agent(Agent):
         return self.ssn
 
     def get_uncert_value(self):
-        return self.uncert
+        return round(float(self.uncert), 2)
 
     def get_vote_status(self):
         return self.voting
@@ -178,19 +178,22 @@ class Green_Agent(Agent):
         self.voting = is_voting
 
     def update_uncert(self, value: float):
-        max_min_value = 1.0
+        # max_min_value = 1.0
 
-        # if val is > 1.0
-        if value > max_min_value:
-            self.uncert = max_min_value
+        # # if val is > 1.0
+        # if value > max_min_value:
+        #     self.uncert = max_min_value
         
-        # id val is < -1.0
-        elif value < -max_min_value:
-            self.uncert = -max_min_value
+        # # id val is < -1.0
+        # elif value < -max_min_value:
+        #     self.uncert = -max_min_value
 
-        # else its a valid value
+        # # else its a valid value
+        # else:
+        if value < 0.00:
+            self.uncert -= value
         else:
-            self.uncert = value
+            self.uncert += value
 
     def set_uncerts(self, uncert: list):
         will_vote = self.get_rand(uncert, uniform=True)
@@ -206,15 +209,21 @@ class Green_Agent(Agent):
         prev_voting = self.get_vote_status()
         prev_uncert = self.get_uncert_value()
 
-        # Update uncertainty values
-        self.update_uncert(round(value, 2))
+        # # Update uncertainty values
+        # self.update_uncert(round(value, 2))
 
         # An agent is being influenced to change their voting status
-        if not is_voting == prev_voting:
+        if not prev_voting == is_voting:
+
+            if prev_uncert < 0.00:
+                self.uncert -= value
+            else:
+                self.uncert += value
+
             curr_uncert = self.uncert
 
             # agent was unsure of their voting status before and now is sure 
-            if prev_uncert >= 0.00 and curr_uncert < 0.00:
+            if prev_uncert >= curr_uncert and curr_uncert > 0.00:
                 self.set_vote_status(is_voting)
                 #print("Status Changed")
         
