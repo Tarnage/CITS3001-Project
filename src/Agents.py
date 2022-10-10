@@ -60,8 +60,8 @@ class Grey_Agent(Agent):
     def get_team_alignment(self):
         return self.team_alignment
 
-    def set_active(self):
-        self.active = True
+    def set_active(self, input: bool):
+        self.active = input
 
     def is_active(self):
         return self.active
