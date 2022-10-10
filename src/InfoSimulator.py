@@ -8,14 +8,24 @@ import copy
 import logging
 from datetime import datetime
 import math
+import os
 
 BLUE_OPTIONS = {
     "DEPLOY_GREY": 6,
 }
 
 format = '%(message)s'
-folder = f"./logs/"
-logs = folder + datetime.now().strftime("%m.%d.%Y.%H.%M.%S")+'.log'
+dir_path = f"./logs/"
+count = 0
+
+for path in os.listdir(dir_path):
+    # check if current path is a file
+    if os.path.isfile(os.path.join(dir_path, path)):
+        count += 1
+
+filename = f'{count}'
+
+logs = f'{dir_path}Game_{count+1}.log'
 
 
 logging.basicConfig(level=logging.INFO, filename=logs, format=format)
@@ -45,7 +55,7 @@ class InfoSimulator:
         # Create a graph for modelling
         self.model = nx.Graph()
         self.social_network = self.create_green_agents(uncert_ints, n, p)
-
+        self.update_vote_status()
 
 
     def create_green_agents(self, uncernt_ints, n: int, p: list) -> list:
@@ -86,9 +96,8 @@ class InfoSimulator:
                     agent.add_connection(j)
                     social_network[j].add_connection(i)
 
-        self.update_vote_status()
-
         return social_network
+
 
     def update_vote_status(self):
         will_vote = 0
@@ -108,6 +117,9 @@ class InfoSimulator:
         print(f"Current Green Population Voting Status:")
         print(f"Will Vote: {self.num_will_vote}")
         print(f"Not Vote: {self.num_not_vote}")
+
+    
+    def log_current_votes(self):
         logging.info(f"\t\tWill Vote: {self.num_will_vote}")
         logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
 
@@ -123,73 +135,92 @@ class InfoSimulator:
     def get_current_turn(self):
         return self.current_turn
 
+
     def set_current_turn(self, turn):
         self.current_turn = turn
+
 
     def get_num_turns(self):
         return self.num_turns
 
+
     def increment_turns(self):
         self.num_turns += 1
+
 
     def run(self):
         logging.info(f"Game Start:")
         logging.info(f"\tParameters: ")
-        logging.info(f"\t\t Uncertainty Intervals: [{self.uncert_ints[0]}, {self.uncert_ints[1]}]")
-        logging.info(f"\t\t Connection Probability: [{self.n}, {self.p}]")
-        logging.info(f"\t\t Grey Proportions: {self.grey_proportion}")
+        logging.info(f"\t\tUncertainty Intervals: [{self.uncert_ints[0]}, {self.uncert_ints[1]}]")
+        logging.info(f"\t\tConnection Probability: [{self.n}, {self.p}]")
+        logging.info(f"\t\tGrey Proportions: {self.grey_proportion}")
         try:
             # Randomly choose who goes first
             self.choose_first_move()
+            logging.info(f"\t\tWill Vote: {self.num_will_vote}")
+            logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
+            logging.info(f"Turn: {self.num_turns+1}")
+            
 
-            logging.info(f"Turn: {self.num_turns}")
-            logging.info(f"\tWill Vote: {self.num_will_vote}")
-            logging.info(f"\tNot Vote: {self.num_will_vote}")
+            finished = False
 
-            while self.blue_agent.get_energy() > 0 :
+            while not finished:
+                start = time.perf_counter()
                 # Updates and prints gloabl values before each turn
-                self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
-                time.sleep(2)
+                #self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
+                #time.sleep(2)
                 if self.get_current_turn() == "red":
                     logging.info("\tRed Agents Turn:")
                     print("Red Agents Turn...")
                     self.red_turn()
-                    time.sleep(2)
+                    #time.sleep(2)
                     self.set_current_turn("blue")
                     self.update_vote_status()
                     self.print_vote_status()
+                    self.log_current_votes()
                 else:
                     logging.info("\tBlue Agents Turn:")
                     print("Blue Agents Turn...")
-                    print(f"Current Energy: {self.blue_agent.get_energy()}")
                     self.blue_turn()
-                    time.sleep(2)
+                    #time.sleep(2)
                     self.set_current_turn("red")
                     self.update_vote_status()
                     self.print_vote_status()
+                    self.log_current_votes()
                 
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
                 if self.get_num_turns() % 2 == 0:
-                    logging.info("\tGreen Agents are interacting...")
+
+                    logging.info("\tGreen Agents Turn:")
                     print("Green Agents are interacting....")
-                    time.sleep(2)
+                    #time.sleep(2)
                     self.green_turn()
                     self.update_vote_status()
                     self.print_vote_status()
+                    self.log_current_votes()
 
                     if self.grey_agent.is_active():
                         logging.info("\tThe Grey Agent is making its move:")
-                        print("The Grey Agent is making its move....")
-                        time.sleep(2)
+                        print("Grey Agent Turn:")
+                        #time.sleep(2)
                         self.grey_turn()
                         self.update_vote_status()
                         self.print_vote_status()
+                        self.log_current_votes()
 
-                    logging.info(f"Turn: {self.num_turns // 2}")
+                        # Grey only can be used once
+                        self.grey_agent.set_active(False)
+                
+                    if self.blue_agent.get_energy() < 0 and self.get_num_turns() % 2 == 0:
+                        finished = True
+                        # Elapsed time end
+                        end = time.perf_counter()
+                        print("Finised in {:.3g} seconds".format(end-start))
+                        self.check_winner()
+                    else:
+                        logging.info(f"Turn: {(self.num_turns//2)+1}")
 
-            self.check_winner()
-        
         except KeyboardInterrupt:
             print("Ending game...")
 
@@ -198,12 +229,21 @@ class InfoSimulator:
         self.update_vote_status()
         self.print_vote_status()
 
+        logging.info(f"Game finished at turn: {(self.num_turns//2)+1}")
+
+        winner = ""
         if self.num_will_vote > self.num_not_vote:
-            print("BLUE AGENT WINS!!")
+            winner = "BLUE"
         elif self.num_will_vote < self.num_not_vote:
-            print("RED AGENT WINS!!")
+            winner = "RED"
         else:
             print("ITS A TIE!")
+            logging.info(f'TIE')
+            exit(0)
+
+        print(f"{winner} AGENT WINS!!")
+        logging.info(f'{winner}')
+        exit(0)
 
 
     def user_input(self, team: str):
@@ -241,19 +281,32 @@ class InfoSimulator:
 
         # Change remaining green opinion
         amount = self.red_agent.broadcast(option)
-        self.change_opinion(amount , False)
 
         logging.info(f"\t\tUsing Option: {option}")
-        logging.info(f"\t\tuncertainty: {self.red_agent.broadcast_options[option]}")
-        logging.info(f"\t\tfollowers lost: {self.red_agent.broadcast_options[option]}")
+        logging.info(f"\t\tUncertainty: {amount}")
+        logging.info(f"\t\tFollowers Lost: {lost}")
+        
+        
+        if option > 0:
+            #self.red_change_opinion(amount)
+            self.change_opinion(amount , False)
+
+
         return
+
+
+    def red_change_opinion(self, amount):
+        is_voting = False
+        for ssn in self.red_agent.get_connections():
+            green_agent = self.social_network[ssn]
+            green_agent.add_unert_values(amount, is_voting)
 
 
     def blue_turn(self):
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
-        self.blue_agent.print_moves()
-        option = self.user_input("blue")
-
+        #self.blue_agent.print_moves()
+        #option = self.user_input("blue")
+        option = rand.randint(0, 5)
         logging.info(f"\t\tUsing Option: {option}")
 
         if option == BLUE_OPTIONS["DEPLOY_GREY"]:
@@ -261,19 +314,23 @@ class InfoSimulator:
             self.blue_agent.set_used_grey()
             logging.info(f"\t\tDeployed Grey Agent: ({self.grey_agent.get_team_alignment()})")
         else:
-            opinion_gain = -(self.blue_agent.get_opinion_gain(option))
-            logging.info(f"\t\tUncertainty Value: {opinion_gain}")
-            logging.info(f"\t\tCurrent Energy: {opinion_gain}")
+            opinion_gain = self.blue_agent.get_opinion_gain(option)
+            logging.info(f"\t\tUncertainty: {opinion_gain}")
+            logging.info(f"\t\tCurrent Energy: {self.blue_agent.get_energy()}")
+
             # Change green opinion
-            self.change_opinion(opinion_gain, True)
+            if option > 0:
+                self.change_opinion(opinion_gain, True)
+
             # Lose Energy
             energy_lost = self.blue_agent.lose_energy(option)
+
             logging.info(f"\t\tEnergy Lost: {energy_lost}")
             
 
 
     def deploy_grey_agent(self):
-        self.grey_agent.set_active()
+        self.grey_agent.set_active(True)
 
 
     def grey_turn(self):
@@ -344,13 +401,17 @@ class InfoSimulator:
             This change opinion is used for blue, and grey agents as they can talk to everyone
 
         '''
+        count = 0
         for agent in self.social_network:
             prev_voting = agent.get_vote_status()
             agent.add_unert_values(amount, is_voting)
             new_voting = agent.get_vote_status()
 
             if not prev_voting == new_voting:
-                print("Opinion Changed")
+                count += 1
+        
+        logging.info(f"\t\tOpinons Changed: {count}")
+        print(f"Opinons Changed: {count}")
         return
 
 
@@ -406,7 +467,7 @@ class InfoSimulator:
             value = math.inf
             choice =  rand.randint(0,6)
             for option in range(len(red.broadcast_options)): 
-                print(option)
+                #print(option)
                 green_Copy = copy.deepcopy(green)
                 red_Copy = copy.deepcopy(red)        
                 opinion_change = self.simulate_red_lost(red_Copy, option)
