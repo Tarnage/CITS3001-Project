@@ -67,11 +67,11 @@ class InfoSimulator:
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
             if new_agent.get_vote_status() == False:
-                self.red_agent.connections.append(i)
+                self.red_agent.get_connections().append(i)
                 self.red_agent.increment_followers() #increment followers
 
             # BLUE HAS A CONNECTION TO EVERYONE
-            self.blue_agent.connections.append(i)
+            self.blue_agent.get_connections().append(i)
 
         # Check for connections between green agents
         for i, agent in enumerate(social_network):
@@ -289,17 +289,17 @@ class InfoSimulator:
         
         if option > 0:
             #self.red_change_opinion(amount)
-            self.change_opinion(amount , False)
+            self.red_change_opinion(amount , False)
 
 
         return
 
 
-    def red_change_opinion(self, amount):
-        is_voting = False
-        for ssn in self.red_agent.get_connections():
-            green_agent = self.social_network[ssn]
-            green_agent.add_unert_values(amount, is_voting)
+    # def red_change_opinion(self, amount):
+    #     is_voting = False
+    #     for ssn in self.red_agent.get_connections():
+    #         green_agent = self.social_network[ssn]
+    #         green_agent.add_unert_values(amount, is_voting)
 
 
     def blue_turn(self):
@@ -352,7 +352,7 @@ class InfoSimulator:
             # Mingle with eachother and effect opinions
             is_voting = agent.get_vote_status()
             curr_agent_uncert = agent.get_uncert_value()
-            for connection in agent.connections:
+            for connection in agent.get_connections():
                 green_two = self.social_network[connection]
                 # if agent is voting it will try to convince others to vote else if will try to convince
                 # changing the agents opinion
@@ -382,17 +382,19 @@ class InfoSimulator:
             return round(alpha + beta, 2)
 
 
-    def lose_followers( self , percentage: int):
-        numA = len(self.red_agent.connections)
-
-        for i in range(int(numA*percentage/100)):
-            #just removing random agents for now
-            node = rand.randrange(numA)
-
-            if node in self.red_agent.get_connections():
-                self.red_agent.remove_connections(node)
-                self.red_agent.decrement_followers()
-                print("RED LOST A FOLLOWER")
+    def lose_followers( self , amount: int):
+        numA = len(self.red_agent.get_connections())
+        lost = 0
+        while (lost < amount):
+            for node in self.red_agent.get_connections():
+                percentage_lost = amount/numA
+                if node.get_uncert_value() < 1 and node.get_vote_status(): #they are voting and they are pretty certain
+                    percentage_lost =+ 0.3 #magic number for now 
+                if rand.uniform(0, 1) < percentage_lost:
+                    lost += 1
+                    self.red_agent.remove_connections(node)
+                    self.red_agent.decrement_followers()
+                    print("RED LOST A FOLLOWER")
         return
 
 
@@ -414,6 +416,26 @@ class InfoSimulator:
         print(f"Opinons Changed: {count}")
         return
 
+        
+    def red_change_opinion(self, amount: float, is_voting: bool):
+        '''
+            This change option is used for Red connections 
+        '''
+        count = 0
+        for agent in self.red_agent.get_connections():
+            prev_voting = agent.get_vote_status()
+            agent.add_unert_values(amount, is_voting)
+            new_voting = agent.get_vote_status()
+
+            if not prev_voting == new_voting:
+                count += 1
+
+        
+        logging.info(f"\t\tOpinons Changed: {count}")
+        print(f"Opinons Changed: {count}")
+        return
+
+
 
 
     # Use this for the minimax it will return the number of greens that have chnaged their opinion
@@ -428,6 +450,7 @@ class InfoSimulator:
                 num_opinion_change += 1
         #dont need return yet
         return num_opinion_change
+
 
     def simulate_red_lost(self, red, option):
         #will need to do a deepcopy agent and so that different routes could be taken.
@@ -470,7 +493,7 @@ class InfoSimulator:
                 #print(option)
                 green_Copy = copy.deepcopy(green)
                 red_Copy = copy.deepcopy(red)        
-                opinion_change = self.simulate_red_lost(red_Copy, option)
+                opinion_change = self.simulate_red_lost(red_Copy.connections, option)
                 self.simulate_change_opinion(green_Copy, opinion_change, False)
                 new_score = self.minimaxRed(green_Copy, blue, red_Copy, depth-1, 0)
 
