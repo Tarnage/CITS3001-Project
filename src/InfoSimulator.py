@@ -67,7 +67,7 @@ class InfoSimulator:
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
             if new_agent.get_vote_status() == False:
-                self.red_agent.get_connections().append(i)
+                self.red_agent.get_connections().append(new_agent)
                 self.red_agent.increment_followers() #increment followers
 
             # BLUE HAS A CONNECTION TO EVERYONE
@@ -493,8 +493,8 @@ class InfoSimulator:
                 #print(option)
                 green_Copy = copy.deepcopy(green)
                 red_Copy = copy.deepcopy(red)        
-                opinion_change = self.simulate_red_lost(red_Copy.connections, option)
-                self.simulate_change_opinion(green_Copy, opinion_change, False)
+                opinion_change = self.simulate_red_lost(red_Copy, option)
+                self.simulate_change_opinion(red_Copy.get_connections(), opinion_change, False)
                 new_score = self.minimaxRed(green_Copy, blue, red_Copy, depth-1, 0)
 
                 if new_score[1] < value:
