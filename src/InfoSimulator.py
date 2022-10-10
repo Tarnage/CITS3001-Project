@@ -165,9 +165,9 @@ class InfoSimulator:
             finished = False
 
             while not finished:
-                
+                start = time.perf_counter()
                 # Updates and prints gloabl values before each turn
-                self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
+                #self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
                 #time.sleep(2)
                 if self.get_current_turn() == "red":
                     logging.info("\tRed Agents Turn:")
@@ -192,7 +192,7 @@ class InfoSimulator:
                 # Greens turn after red and blue have had their turns
                 if self.get_num_turns() % 2 == 0:
 
-                    logging.info("\tGreen Agents are interacting...")
+                    logging.info("\tGreen Agents Turn:")
                     print("Green Agents are interacting....")
                     #time.sleep(2)
                     self.green_turn()
@@ -202,16 +202,22 @@ class InfoSimulator:
 
                     if self.grey_agent.is_active():
                         logging.info("\tThe Grey Agent is making its move:")
-                        print("The Grey Agent is making its move....")
+                        print("Grey Agent Turn:")
                         #time.sleep(2)
                         self.grey_turn()
                         self.update_vote_status()
                         self.print_vote_status()
                         self.log_current_votes()
+
+                        # Grey only can be used once
+                        self.grey_agent.set_active(False)
                 
                     if self.blue_agent.get_energy() < 0 and self.get_num_turns() % 2 == 0:
-                        self.check_winner()
                         finished = True
+                        # Elapsed time end
+                        end = time.perf_counter()
+                        print("Finised in {:.3g} seconds".format(end-start))
+                        self.check_winner()
                     else:
                         logging.info(f"Turn: {(self.num_turns//2)+1}")
 
@@ -277,11 +283,15 @@ class InfoSimulator:
         amount = self.red_agent.broadcast(option)
 
         logging.info(f"\t\tUsing Option: {option}")
-        logging.info(f"\t\tuncertainty: {amount}")
-        logging.info(f"\t\tfollowers lost: {lost}")
+        logging.info(f"\t\tUncertainty: {amount}")
+        logging.info(f"\t\tFollowers Lost: {lost}")
         
-        #self.red_change_opinion(amount)
-        self.change_opinion(amount , False)
+        
+        if option > 0:
+            #self.red_change_opinion(amount)
+            self.change_opinion(amount , False)
+
+
         return
 
 
@@ -305,18 +315,22 @@ class InfoSimulator:
             logging.info(f"\t\tDeployed Grey Agent: ({self.grey_agent.get_team_alignment()})")
         else:
             opinion_gain = self.blue_agent.get_opinion_gain(option)
-            logging.info(f"\t\tUncertainty Value: {opinion_gain}")
+            logging.info(f"\t\tUncertainty: {opinion_gain}")
             logging.info(f"\t\tCurrent Energy: {self.blue_agent.get_energy()}")
+
             # Change green opinion
-            self.change_opinion(opinion_gain, True)
+            if option > 0:
+                self.change_opinion(opinion_gain, True)
+
             # Lose Energy
             energy_lost = self.blue_agent.lose_energy(option)
+
             logging.info(f"\t\tEnergy Lost: {energy_lost}")
             
 
 
     def deploy_grey_agent(self):
-        self.grey_agent.set_active()
+        self.grey_agent.set_active(True)
 
 
     def grey_turn(self):
