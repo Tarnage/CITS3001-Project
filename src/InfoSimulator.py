@@ -66,9 +66,11 @@ class InfoSimulator:
             social_network.append(new_agent)
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
-            if new_agent.get_vote_status() == False:
-                self.red_agent.get_connections().append(new_agent)
-                self.red_agent.increment_followers() #increment followers
+
+            #everyone is a red follower now 
+            # if new_agent.get_vote_status() == False:
+            self.red_agent.get_connections().append(i)
+            self.red_agent.increment_followers() #increment followers
 
             # BLUE HAS A CONNECTION TO EVERYONE
             self.blue_agent.get_connections().append(i)
@@ -123,6 +125,8 @@ class InfoSimulator:
         logging.info(f"\t\tWill Vote: {self.num_will_vote}")
         logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
 
+    def log_red_followers(self):
+        logging.info(f"\t\tFollowing Red: {len(self.red_agent.get_connections())}")
 
     def choose_first_move(self):
         # TODO: allow human players to choose 0 (heads) or 1(tails) 
@@ -177,6 +181,8 @@ class InfoSimulator:
                     self.set_current_turn("blue")
                     self.update_vote_status()
                     self.print_vote_status()
+                    self.log_red_followers()
+
                     self.log_current_votes()
                 else:
                     logging.info("\tBlue Agents Turn:")
@@ -273,7 +279,7 @@ class InfoSimulator:
         # print(followerLost)
         
         #option = self.user_input("red")
-        option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
+        option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 2, True)[0]
         print("Choosing option :" + str(option))
         # Lose Followers
         lost = self.red_agent.followers_lost(option)
@@ -281,11 +287,9 @@ class InfoSimulator:
 
         # Change remaining green opinion
         amount = self.red_agent.broadcast(option)
-
         logging.info(f"\t\tUsing Option: {option}")
         logging.info(f"\t\tUncertainty: {amount}")
         logging.info(f"\t\tFollowers Lost: {lost}")
-        
         
         if option > 0:
             #self.red_change_opinion(amount)
@@ -384,17 +388,18 @@ class InfoSimulator:
 
     def lose_followers( self , amount: int):
         numA = len(self.red_agent.get_connections())
+        amount = abs(amount)
         lost = 0
         while (lost < amount):
-            for node in self.red_agent.get_connections():
+            for i in self.red_agent.get_connections():
+                node = self.social_network[i]
                 percentage_lost = amount/numA
                 if node.get_uncert_value() < 1 and node.get_vote_status(): #they are voting and they are pretty certain
                     percentage_lost =+ 0.3 #magic number for now 
                 if rand.uniform(0, 1) < percentage_lost:
                     lost += 1
-                    self.red_agent.remove_connections(node)
+                    self.red_agent.remove_connections(i)
                     self.red_agent.decrement_followers()
-                    print("RED LOST A FOLLOWER")
         return
 
 
@@ -406,9 +411,10 @@ class InfoSimulator:
         count = 0
         for agent in self.social_network:
             prev_voting = agent.get_vote_status()
-            agent.add_unert_values(amount, is_voting)
-            new_voting = agent.get_vote_status()
 
+            agent.add_unert_values(-amount, is_voting)
+
+            new_voting = agent.get_vote_status()
             if not prev_voting == new_voting:
                 count += 1
         
@@ -422,16 +428,18 @@ class InfoSimulator:
             This change option is used for Red connections 
         '''
         count = 0
-        for agent in self.red_agent.get_connections():
+        for i in self.red_agent.get_connections():
+            agent = self.social_network[i]
             prev_voting = agent.get_vote_status()
-            agent.add_unert_values(amount, is_voting)
+            agent.add_unert_values(-amount, is_voting)
+
             new_voting = agent.get_vote_status()
 
             if not prev_voting == new_voting:
                 count += 1
 
         
-        logging.info(f"\t\tOpinons Changed: {count}")
+        logging.info(f"\t\t Red Opinions Changed: {count}")
         print(f"Opinons Changed: {count}")
         return
 
@@ -443,7 +451,7 @@ class InfoSimulator:
         num_opinion_change = 0
         for agent in deep_copy:
             prev_voting = agent.get_vote_status()
-            agent.add_unert_values(amount, is_voting)
+            agent.add_unert_values(-amount, is_voting)
             new_voting = agent.get_vote_status()
 
             if not prev_voting == new_voting:
@@ -451,13 +459,33 @@ class InfoSimulator:
         #dont need return yet
         return num_opinion_change
 
+    def simulate_change_opinion_red(self, deep_copy, red_agent, amount: int, is_voting: bool):
+        num_opinion_change = 0
+        for i in red_agent.get_connections():
+            agent = deep_copy[i]
+            prev_voting = agent.get_vote_status()
+            agent.add_unert_values(-amount, is_voting)
+            new_voting = agent.get_vote_status()
+
+            if not prev_voting == new_voting:
+                num_opinion_change += 1
+        #dont need return yet
+        logging.info(f"\t\tXDRed Opinions Changed: {num_opinion_change} with amount : {amount}")
+
+        return num_opinion_change
+
 
     def simulate_red_lost(self, red, option):
         #will need to do a deepcopy agent and so that different routes could be taken.
         # will use AVERAGE amounts (possibly take into consideration, min and max interval if we change it from a flat amount. )
-        red.followers_lost(option, average = True) 
-        return red.broadcast(option, average = True) 
+        lost = red.followers_lost(option, average = True) 
+
+        red.decrement_followers(lost)
+        broadCast = red.broadcast(option, average = True) 
         
+        logging.info(f"\t\t WEHERE: {broadCast} with option : {option}")
+
+        return broadCast
 
     def simulate_blue_energy(self, blueAgent, option):
         blueAgent.lose_energy(option, average = True)
@@ -487,26 +515,28 @@ class InfoSimulator:
 
 
         if Maxteam:
-            value = math.inf
+            value = -math.inf
             choice =  rand.randint(0,6)
             for option in range(len(red.broadcast_options)): 
                 #print(option)
                 green_Copy = copy.deepcopy(green)
                 red_Copy = copy.deepcopy(red)        
                 opinion_change = self.simulate_red_lost(red_Copy, option)
-                self.simulate_change_opinion(red_Copy.get_connections(), opinion_change, False)
+                self.simulate_change_opinion_red(green_Copy, red_Copy, opinion_change, False)
                 new_score = self.minimaxRed(green_Copy, blue, red_Copy, depth-1, 0)
-
-                if new_score[1] < value:
+                logging.info(f"\t\t Current Score = {value}, Option: {option}")
+                if new_score[1] > value:
                     value = new_score[1]
                     if new_score[0] == -1:
                         choice = option
                     else:
                         choice = new_score[0]
+                logging.info(f"\t\t new score IS {new_score} with option : {choice}")
+
             return (choice, value)
         
         else:
-            value = -math.inf
+            value = math.inf
             choice =  rand.randint(0,6)
             for option in range(len(blue.opinion_gain)): 
                 green_Copy = copy.deepcopy(green)
@@ -515,7 +545,7 @@ class InfoSimulator:
                 self.simulate_change_opinion(green_Copy, opinion_change, True)
                 new_score = self.minimaxRed(green_Copy, blue_Copy, red, depth -1, 1)
 
-                if new_score[1] > value:
+                if new_score[1] < value:
                     value = new_score[1]
                     if new_score[0] == None:
                         choice = option
@@ -544,13 +574,14 @@ class InfoSimulator:
         #evaluate who is currently winning and return a point value 
         points = 0
         for agent in greenNetwork:
-            if agent.get_vote_status():
-                points -= 5
-            else: 
-                points += 5
+            if not agent.get_vote_status():
+                points += 6
         
-        points += int((100-blue.get_energy())/10) #less energy, better for red?
+        #points += int((100-blue.get_energy())/10) #less energy, better for red?
 
-        points += red.get_followers()
+        total = len(self.social_network)
+        redF = red.get_followers()
+
+        points += redF * 100
 
         return points
