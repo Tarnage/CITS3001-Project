@@ -57,7 +57,6 @@ class InfoSimulator:
         self.social_network = self.create_green_agents(uncert_ints, n, p)
         self.update_vote_status()
 
-
     def create_green_agents(self, uncernt_ints, n: int, p: list) -> list:
         social_network = list()
         # construct num_green of Green Agents
@@ -230,6 +229,9 @@ class InfoSimulator:
         self.print_vote_status()
 
         logging.info(f"Game finished at turn: {(self.num_turns//2)+1}")
+
+        # save the graph of the green uncertainties at the end of the game
+        self.metrics.save_uncert_dist(self.social_network, filename)
 
         winner = ""
         if self.num_will_vote > self.num_not_vote:

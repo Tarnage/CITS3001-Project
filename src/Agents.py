@@ -216,9 +216,19 @@ class Green_Agent(Agent):
         if not prev_voting == is_voting:
 
             if prev_uncert < 0.00:
-                self.uncert -= value
+                result = (self.uncert - value)
+
+                if result <= -1.00:
+                    self.uncert = -1.00
+                else:
+                    self.uncert = result
             else:
-                self.uncert += value
+                result = (self.uncert + value)
+
+                if result >= 1.00:
+                    self.uncert = -1.00
+                else:
+                    self.uncert = result
 
             curr_uncert = self.uncert
 

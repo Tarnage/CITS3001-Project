@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 import networkx as nx
+import seaborn as sns
 
 class Metrics:
     def __init__(self) -> None:
@@ -68,3 +69,31 @@ class Metrics:
         nx.draw(nx_graph, pos, with_labels=1)
         plt.show(block=False)
         plt.pause(0.01)
+
+    def save_uncert_dist(self, network: list, filename: str) -> None:
+        graph_dest = f'./graphs/Game_{filename}'
+        not_voting_list = []
+        voting_list = []
+
+        for green in network:
+            value = round(green.get_uncert_value(), 2)
+            voting = green.get_vote_status()
+
+            if voting:
+                voting_list.append(value)
+            else:
+                not_voting_list.append(value)
+
+        # plt.hist(not_voting_list)
+        # plt.gca().set(title='Not Voting Distrubtion', ylabel='Number of Green Agents', xlabel='Uncertainty')
+        # plt.show()
+        # plt.hist(voting_list)
+        # plt.gca().set(title='Voting Distrubtion', ylabel='Number of Green Agents', xlabel='Uncertainty')
+        # plt.show()
+        sns.displot(not_voting_list,).set(title=f'Green Agents Not Voting = {len(not_voting_list)}')
+        plt.tight_layout()
+        plt.savefig(f'{graph_dest}-NOT_VOTING')
+
+        sns.displot(voting_list,).set(title=f'Green Agents Voting = {len(voting_list)}')
+        plt.tight_layout()
+        plt.savefig(f'{graph_dest}-VOTING')
