@@ -100,20 +100,3 @@ class Metrics:
         plt.savefig(f'{graph_dest}')
 
         plt.close("all")
-
-    def check_dir(self, peer_dir: str):
-        ''' Helper to make sure temp directory exists if not create one
-            Args;
-                peer_dir(str): name of the directory to check
-        '''
-        if not os.path.isdir(peer_dir):
-            try:
-                os.mkdir(peer_dir)
-            except OSError as err:
-                sys.exit("Directory creation failed with error: {err}")
-
-        if not os.path.isdir(peer_dir):
-            try:
-                os.mkdir(peer_dir)
-            except OSError as err:
-                sys.exit("Directory creation failed with error: {err}")
