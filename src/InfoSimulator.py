@@ -9,14 +9,31 @@ import logging
 from datetime import datetime
 import math
 import os
+import sys
+
+
+def check_dir(peer_dir: str):
+    ''' Helper to make sure temp directory exists if not create one
+        Args;
+            peer_dir(str): name of the directory to check
+    '''
+    if not os.path.isdir(peer_dir):
+        try:
+            os.mkdir(peer_dir)
+        except OSError as err:
+            sys.exit("Directory creation failed with error: {err}")
 
 BLUE_OPTIONS = {
     "DEPLOY_GREY": 6,
 }
 
+# Check logs and graph dir exist
+check_dir('./logs')
+check_dir('./graphs')
+
 format = '%(message)s'
 dir_path = f"./logs/"
-count = 0
+count = 1
 
 for path in os.listdir(dir_path):
     # check if current path is a file
@@ -25,7 +42,7 @@ for path in os.listdir(dir_path):
 
 filename = f'{count}'
 
-logs = f'{dir_path}Game_{count+1}.log'
+logs = f'{dir_path}Game_{count}.log'
 
 
 logging.basicConfig(level=logging.INFO, filename=logs, format=format)
@@ -35,7 +52,7 @@ You can quit the game at any time by typing "quit" into the terminal
 '''
 
 class InfoSimulator:
-    def __init__(self, uncert_ints: list, n: int, p: int, grey_proportion: int) -> None:
+    def __init__(self, uncert_ints: list, n: int, p: int, grey_proportion: int, simulate=False) -> None:
         self.social_network = list()
         self.red_agent = Agents.Red_Agent()
         self.blue_agent = Agents.Blue_Agent()
@@ -57,6 +74,8 @@ class InfoSimulator:
         self.social_network = self.create_green_agents(uncert_ints, n, p)
         self.update_vote_status()
 
+        if not simulate:
+            self.ask_for_players()
 
     def create_green_agents(self, uncernt_ints, n: int, p: list) -> list:
         social_network = list()
@@ -131,6 +150,8 @@ class InfoSimulator:
         else:
             self.current_turn = "red"
 
+        print(f"{self.current_turn} will go first!")
+
 
     def get_current_turn(self):
         return self.current_turn
@@ -154,18 +175,21 @@ class InfoSimulator:
         logging.info(f"\t\tUncertainty Intervals: [{self.uncert_ints[0]}, {self.uncert_ints[1]}]")
         logging.info(f"\t\tConnection Probability: [{self.n}, {self.p}]")
         logging.info(f"\t\tGrey Proportions: {self.grey_proportion}")
+
         try:
             # Randomly choose who goes first
             self.choose_first_move()
             logging.info(f"\t\tWill Vote: {self.num_will_vote}")
             logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
             logging.info(f"Turn: {self.num_turns+1}")
+            self.metrics.save_uncert_dist(self.social_network, filename, "Start", (self.num_turns))
             
 
             finished = False
 
             while not finished:
                 start = time.perf_counter()
+
                 # Updates and prints gloabl values before each turn
                 #self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
                 #time.sleep(2)
@@ -174,24 +198,26 @@ class InfoSimulator:
                     print("Red Agents Turn...")
                     self.red_turn()
                     #time.sleep(2)
-                    self.set_current_turn("blue")
                     self.update_vote_status()
                     self.print_vote_status()
                     self.log_current_votes()
+                    self.metrics.save_uncert_dist(self.social_network, filename, self.get_current_turn(), (self.num_turns//2)+1)
+                    self.set_current_turn("blue")
                 else:
                     logging.info("\tBlue Agents Turn:")
                     print("Blue Agents Turn...")
                     self.blue_turn()
                     #time.sleep(2)
-                    self.set_current_turn("red")
                     self.update_vote_status()
                     self.print_vote_status()
                     self.log_current_votes()
-                
+                    self.metrics.save_uncert_dist(self.social_network, filename, self.get_current_turn(), (self.num_turns//2)+1)
+                    self.set_current_turn("red")
+
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
-                if self.get_num_turns() % 2 == 0:
 
+                if self.get_num_turns() % 2 == 0 and not self.get_num_turns() == 0:
                     logging.info("\tGreen Agents Turn:")
                     print("Green Agents are interacting....")
                     #time.sleep(2)
@@ -199,6 +225,7 @@ class InfoSimulator:
                     self.update_vote_status()
                     self.print_vote_status()
                     self.log_current_votes()
+                    self.metrics.save_uncert_dist(self.social_network, filename, "green", (self.num_turns//2))
 
                     if self.grey_agent.is_active():
                         logging.info("\tThe Grey Agent is making its move:")
@@ -208,6 +235,7 @@ class InfoSimulator:
                         self.update_vote_status()
                         self.print_vote_status()
                         self.log_current_votes()
+                        self.metrics.save_uncert_dist(self.social_network, filename, "grey", (self.num_turns//2))
 
                         # Grey only can be used once
                         self.grey_agent.set_active(False)
@@ -221,6 +249,8 @@ class InfoSimulator:
                     else:
                         logging.info(f"Turn: {(self.num_turns//2)+1}")
 
+                
+
         except KeyboardInterrupt:
             print("Ending game...")
 
@@ -230,6 +260,9 @@ class InfoSimulator:
         self.print_vote_status()
 
         logging.info(f"Game finished at turn: {(self.num_turns//2)+1}")
+
+        # save the graph of the green uncertainties at the end of the game
+        self.metrics.save_uncert_dist(self.social_network, filename, "End",(self.num_turns//2)+1)
 
         winner = ""
         if self.num_will_vote > self.num_not_vote:
@@ -246,6 +279,34 @@ class InfoSimulator:
         exit(0)
 
 
+    def ask_for_players(self):
+        while True:
+            option = input("Who do you want to play as? \n[1] Red\n[2] Blue\n[3] Both\n> ")
+
+            print(option)
+            try:
+                if option.isdigit():
+                    if int(option) > 3:
+                        raise ValueError
+                elif option == "quit":
+                    raise Exception
+                break
+            except ValueError:
+                print("This is not a valid Option. Please enter a valid option or type 'quit' to close the game")
+            except Exception:
+                print("Gracefully quiting game")
+                exit(0)
+
+        if int(option) == 1:
+            self.red_agent.set_player(True)
+        elif int(option) == 2:
+            self.blue_agent.set_player(True)
+        elif int(option) == 3:
+            self.red_agent.set_player(True)
+            self.blue_agent.set_player(True)
+            
+            return
+
     def user_input(self, team: str):
         while True:
             option = input("Choose Options: ")
@@ -257,6 +318,8 @@ class InfoSimulator:
                         print("Grey Agetn has already been deployed")
                 elif option == "quit":
                     raise Exception
+                elif option == "":
+                    raise ValueError
                 break
             except ValueError:
                 print("This is not a number. Please enter a valid number or type 'quit' to close the game")
@@ -271,9 +334,13 @@ class InfoSimulator:
         # give 5 options 
         # print(opinionGain)
         # print(followerLost)
+        option = -1
+
+        if self.red_agent.get_player():
+            option = self.user_input("red")
+        else:
+            option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         
-        #option = self.user_input("red")
-        option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         print("Choosing option :" + str(option))
         # Lose Followers
         lost = self.red_agent.followers_lost(option)
@@ -304,9 +371,16 @@ class InfoSimulator:
 
     def blue_turn(self):
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
-        #self.blue_agent.print_moves()
-        #option = self.user_input("blue")
-        option = rand.randint(0, 5)
+        
+        option = -1
+
+        # check if agent is AI or player
+        if self.blue_agent.get_player():
+            self.blue_agent.print_moves()
+            option = self.user_input("blue")
+        else: 
+            option = rand.randint(0, 5)
+
         logging.info(f"\t\tUsing Option: {option}")
 
         if option == BLUE_OPTIONS["DEPLOY_GREY"]:
@@ -348,19 +422,26 @@ class InfoSimulator:
 
     def green_turn(self):
         #set their current side
+        visited = []
         for agent in self.social_network:
+            visited.append(agent)
             # Mingle with eachother and effect opinions
             is_voting = agent.get_vote_status()
             curr_agent_uncert = agent.get_uncert_value()
             for connection in agent.connections:
                 green_two = self.social_network[connection]
-                # if agent is voting it will try to convince others to vote else if will try to convince
-                # changing the agents opinion
-                green_two_uncert = green_two.get_uncert_value()
-                opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
-                green_two.add_unert_values(opinion_change, is_voting)
+                if not green_two in visited:
+                    green_two_uncert = green_two.get_uncert_value()
+                    green_two_opinion = green_two.get_vote_status()
 
-
+                    if curr_agent_uncert < green_two_uncert:
+                        opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
+                        green_two.add_unert_values(opinion_change, is_voting)
+                    else:
+                        opinion_change = self.caculate_opinion_change(green_two_uncert, curr_agent_uncert)
+                        agent.add_unert_values(opinion_change, green_two_opinion)
+                    
+                    
     def caculate_opinion_change(self, alpha: float, beta: float) -> float:
         '''
             Formula: 

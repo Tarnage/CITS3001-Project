@@ -12,8 +12,8 @@ class Agent:
         self.player = False # If True this agent is a human player if False it is AI
         return
 
-    def set_player(self):
-        self.player = True
+    def set_player(self, is_player):
+        self.player = is_player
 
     def get_player(self):
         return self.player
@@ -216,9 +216,19 @@ class Green_Agent(Agent):
         if not prev_voting == is_voting:
 
             if prev_uncert < 0.00:
-                self.uncert -= value
+                result = (self.uncert - value)
+
+                if result <= -1.00:
+                    self.uncert = -1.00
+                else:
+                    self.uncert = result
             else:
-                self.uncert += value
+                result = (self.uncert + value)
+
+                if result >= 1.00:
+                    self.uncert = -1.00
+                else:
+                    self.uncert = result
 
             curr_uncert = self.uncert
 
@@ -229,5 +239,20 @@ class Green_Agent(Agent):
         
         else:
             # The current green agent is being influenced by 
-            # the side that they are currently on 
+            # the side that they are currently on
+            # if prev_uncert < 0.00:
+            #     result = (self.uncert - value)
+
+            #     if result <= -1.00:
+            #         self.uncert = -1.00
+            #     else:
+            #         self.uncert = result
+            # else:
+            #     result = (self.uncert + value)
+
+            #     if result >= 1.00:
+            #         self.uncert = -1.00
+            #     else:
+            #         self.uncert = result
             pass
+            
