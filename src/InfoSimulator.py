@@ -35,7 +35,7 @@ You can quit the game at any time by typing "quit" into the terminal
 '''
 
 class InfoSimulator:
-    def __init__(self, uncert_ints: list, n: int, p: int, grey_proportion: int) -> None:
+    def __init__(self, uncert_ints: list, n: int, p: int, grey_proportion: int, simulate=False) -> None:
         self.social_network = list()
         self.red_agent = Agents.Red_Agent()
         self.blue_agent = Agents.Blue_Agent()
@@ -56,6 +56,9 @@ class InfoSimulator:
         self.model = nx.Graph()
         self.social_network = self.create_green_agents(uncert_ints, n, p)
         self.update_vote_status()
+
+        if not simulate:
+            self.ask_for_players()
 
     def create_green_agents(self, uncernt_ints, n: int, p: list) -> list:
         social_network = list()
@@ -130,6 +133,8 @@ class InfoSimulator:
         else:
             self.current_turn = "red"
 
+        print(f"{self.current_turn} will go first!")
+
 
     def get_current_turn(self):
         return self.current_turn
@@ -153,6 +158,7 @@ class InfoSimulator:
         logging.info(f"\t\tUncertainty Intervals: [{self.uncert_ints[0]}, {self.uncert_ints[1]}]")
         logging.info(f"\t\tConnection Probability: [{self.n}, {self.p}]")
         logging.info(f"\t\tGrey Proportions: {self.grey_proportion}")
+
         try:
             # Randomly choose who goes first
             self.choose_first_move()
@@ -256,6 +262,34 @@ class InfoSimulator:
         exit(0)
 
 
+    def ask_for_players(self):
+        while True:
+            option = input("Who do you want to play as? \n[1] Red\n[2] Blue\n[3] Both\n> ")
+
+            print(option)
+            try:
+                if option.isdigit():
+                    if int(option) > 3:
+                        raise ValueError
+                elif option == "quit":
+                    raise Exception
+                break
+            except ValueError:
+                print("This is not a valid Option. Please enter a valid option or type 'quit' to close the game")
+            except Exception:
+                print("Gracefully quiting game")
+                exit(0)
+
+        if int(option) == 1:
+            self.red_agent.set_player(True)
+        elif int(option) == 2:
+            self.blue_agent.set_player(True)
+        elif int(option) == 3:
+            self.red_agent.set_player(True)
+            self.blue_agent.set_player(True)
+            
+            return
+
     def user_input(self, team: str):
         while True:
             option = input("Choose Options: ")
@@ -267,6 +301,8 @@ class InfoSimulator:
                         print("Grey Agetn has already been deployed")
                 elif option == "quit":
                     raise Exception
+                elif option == "":
+                    raise ValueError
                 break
             except ValueError:
                 print("This is not a number. Please enter a valid number or type 'quit' to close the game")
@@ -281,9 +317,13 @@ class InfoSimulator:
         # give 5 options 
         # print(opinionGain)
         # print(followerLost)
+        option = -1
+
+        if self.red_agent.get_player():
+            option = self.user_input("red")
+        else:
+            option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         
-        #option = self.user_input("red")
-        option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         print("Choosing option :" + str(option))
         # Lose Followers
         lost = self.red_agent.followers_lost(option)
@@ -314,9 +354,16 @@ class InfoSimulator:
 
     def blue_turn(self):
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
-        #self.blue_agent.print_moves()
-        #option = self.user_input("blue")
-        option = rand.randint(0, 5)
+        
+        option = -1
+
+        # check if agent is AI or player
+        if self.blue_agent.get_player():
+            self.blue_agent.print_moves()
+            option = self.user_input("blue")
+        else: 
+            option = rand.randint(0, 5)
+
         logging.info(f"\t\tUsing Option: {option}")
 
         if option == BLUE_OPTIONS["DEPLOY_GREY"]:
