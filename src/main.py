@@ -1,8 +1,6 @@
 from InfoSimulator import *
 import sys
-
-
-
+import getopt
 
 def get_interval():
     broad_interval = [-0.5, 0.5]
@@ -27,6 +25,16 @@ def get_interval():
     return int(option)
 
 
+def usage(prog):
+    print(f"Usage: {prog} [OPTIONS]")
+    print("Description")
+    print("\tThe purpose of this program is to simulate a Red vs. Blue scenerio where information is the main weapon")
+    print("Option")
+    print("\tIf no options are used default intervals, grey proportion and connection probablities will be applied will be applied\n")
+    print("\t-h\tdisplay this help and exit\n")
+    print("\t-s\twill run simulations and save any outputs to the logs and graphs folder\n")
+
+
 if __name__ == "__main__":
 
     # Example of current acceptable inputs
@@ -40,17 +48,43 @@ if __name__ == "__main__":
     grey_proportion_high = 0.8 # 80% chance grey is working for Red team
     grey_proportion_low = 0.1 # 10% chance grey is working for Red team
 
-    simulate = False
+    default_option = ''
 
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "simulate":
+    simulate = False
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hstb", ["help", "simulate", "tight", "broad"])
+        prog = sys.argv[0]
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(err)  # will print something like "option -a not recognized"
+        usage(sys.argv[0])
+        sys.exit(2)
+    for o, a in opts:
+        if o == "-v":
+            verbose = True
+        elif o in ("-h", "--help"):
+            usage(prog)
+            sys.exit()
+        elif o in ("-s", "--simulate"):
             simulate = True
+        elif o in ("-t", '--tight'):
+            default_option = 'tight'
+        elif o in ("-b", '--broad'):
+            default_option = 'broad'
+        else:
+            assert False, "unhandled option"
+
 
     if simulate:
         # Redirecting the print function to the void
         sys.stdout = open(os.devnull, 'w')
-        sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
-        sim.run()
+
+        if default_option == 'tight':
+            sim = InfoSimulator(tight_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
+            sim.run()
+        elif default_option == 'broad':
+            sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
+            sim.run()
     else:
         sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low)
         sim.run()
@@ -58,3 +92,4 @@ if __name__ == "__main__":
     #sim.print_distrubution_graph(display="graph")
 
     #sim.print_green_adjlist()
+
