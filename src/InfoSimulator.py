@@ -9,14 +9,31 @@ import logging
 from datetime import datetime
 import math
 import os
+import sys
+
+
+def check_dir(peer_dir: str):
+    ''' Helper to make sure temp directory exists if not create one
+        Args;
+            peer_dir(str): name of the directory to check
+    '''
+    if not os.path.isdir(peer_dir):
+        try:
+            os.mkdir(peer_dir)
+        except OSError as err:
+            sys.exit("Directory creation failed with error: {err}")
 
 BLUE_OPTIONS = {
     "DEPLOY_GREY": 6,
 }
 
+# Check logs and graph dir exist
+check_dir('./logs')
+check_dir('./graphs')
+
 format = '%(message)s'
 dir_path = f"./logs/"
-count = 0
+count = 1
 
 for path in os.listdir(dir_path):
     # check if current path is a file
@@ -25,7 +42,7 @@ for path in os.listdir(dir_path):
 
 filename = f'{count}'
 
-logs = f'{dir_path}Game_{count+1}.log'
+logs = f'{dir_path}Game_{count}.log'
 
 
 logging.basicConfig(level=logging.INFO, filename=logs, format=format)
