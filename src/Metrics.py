@@ -1,6 +1,8 @@
 from matplotlib import pyplot as plt
 import networkx as nx
 import seaborn as sns
+import os, sys
+import numpy as np
 
 class Metrics:
     def __init__(self) -> None:
@@ -70,8 +72,12 @@ class Metrics:
         plt.show(block=False)
         plt.pause(0.01)
 
-    def save_uncert_dist(self, network: list, filename: str) -> None:
-        graph_dest = f'./graphs/Game_{filename}'
+    def save_uncert_dist(self, network: list, filename: str, player: str, turn: int) -> None:
+        graphs_dir = f'./graphs/Game_{filename}'
+
+        self.check_dir(graphs_dir)
+
+        graph_dest = f'{graphs_dir}/Turn_{turn}-{player}'
         not_voting_list = []
         voting_list = []
 
@@ -84,16 +90,30 @@ class Metrics:
             else:
                 not_voting_list.append(value)
 
-        # plt.hist(not_voting_list)
-        # plt.gca().set(title='Not Voting Distrubtion', ylabel='Number of Green Agents', xlabel='Uncertainty')
-        # plt.show()
-        # plt.hist(voting_list)
-        # plt.gca().set(title='Voting Distrubtion', ylabel='Number of Green Agents', xlabel='Uncertainty')
-        # plt.show()
-        sns.displot(not_voting_list,).set(title=f'Green Agents Not Voting = {len(not_voting_list)}')
-        plt.tight_layout()
-        plt.savefig(f'{graph_dest}-NOT_VOTING')
+        fig, (ax1, ax2) = plt.subplots(1, 2)
 
-        sns.displot(voting_list,).set(title=f'Green Agents Voting = {len(voting_list)}')
+        sns.histplot(not_voting_list, ax=ax1).set(title=f'Green Agents Not Voting = {len(not_voting_list)}', ylabel="Number of Green Agents", xlabel="Uncertainty")
         plt.tight_layout()
-        plt.savefig(f'{graph_dest}-VOTING')
+
+        sns.histplot(voting_list, ax=ax2).set(title=f'Green Agents Voting = {len(voting_list)}', ylabel="Number of Green Agents", xlabel="Uncertainty")
+        plt.tight_layout()
+        plt.savefig(f'{graph_dest}')
+
+        plt.close("all")
+
+    def check_dir(self, peer_dir: str):
+        ''' Helper to make sure temp directory exists if not create one
+            Args;
+                peer_dir(str): name of the directory to check
+        '''
+        if not os.path.isdir(peer_dir):
+            try:
+                os.mkdir(peer_dir)
+            except OSError as err:
+                sys.exit("Directory creation failed with error: {err}")
+
+        if not os.path.isdir(peer_dir):
+            try:
+                os.mkdir(peer_dir)
+            except OSError as err:
+                sys.exit("Directory creation failed with error: {err}")
