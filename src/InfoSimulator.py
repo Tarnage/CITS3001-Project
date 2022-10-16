@@ -85,9 +85,10 @@ class InfoSimulator:
             social_network.append(new_agent)
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
-            if new_agent.get_vote_status() == False:
-                self.red_agent.connections.append(i)
-                self.red_agent.increment_followers() #increment followers
+            #if new_agent.get_vote_status() == False:
+
+            self.red_agent.connections.append(i)
+            self.red_agent.increment_followers() #increment followers
 
             # BLUE HAS A CONNECTION TO EVERYONE
             self.blue_agent.connections.append(i)
@@ -264,18 +265,36 @@ class InfoSimulator:
         # save the graph of the green uncertainties at the end of the game
         self.metrics.save_uncert_dist(self.social_network, filename, "End",(self.num_turns//2)+1)
 
+        final_num_will = 0
+        final_num_not = 0
+        final_num_uncertain = 0
+
+        for agent in self.social_network:
+            if agent.get_vote_status() == True and agent.get_uncert_value() < 0.00:
+                final_num_will += 1
+            elif agent.get_vote_status() == False and agent.get_uncert_value() < 0.00:
+                final_num_not += 1
+            else:
+                final_num_uncertain += 1
+
         winner = ""
-        if self.num_will_vote > self.num_not_vote:
+        if final_num_will > final_num_not:
             winner = "BLUE"
-        elif self.num_will_vote < self.num_not_vote:
+        elif final_num_will < final_num_not:
             winner = "RED"
         else:
             print("ITS A TIE!")
             logging.info(f'TIE')
+            logging.info(f"Will Vote: {final_num_will}")
+            logging.info(f"Not Vote: {final_num_not}")
+            logging.info(f"Uncertain: {final_num_uncertain}")
             exit(0)
 
         print(f"{winner} AGENT WINS!!")
         logging.info(f'{winner}')
+        logging.info(f"Will Vote: {final_num_will}")
+        logging.info(f"Not Vote: {final_num_not}")
+        logging.info(f"Uncertain: {final_num_uncertain}")
         exit(0)
 
 
@@ -339,7 +358,7 @@ class InfoSimulator:
         if self.red_agent.get_player():
             option = self.user_input("red")
         else:
-            option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
+            option = rand.randint(0, 5)
         
         print("Choosing option :" + str(option))
         # Lose Followers
@@ -355,10 +374,8 @@ class InfoSimulator:
         
         
         if option > 0:
-            #self.red_change_opinion(amount)
-            self.change_opinion(amount , False)
-
-
+            self.red_change_opinion(amount)
+            #self.change_opinion(amount , False)
         return
 
 
@@ -366,7 +383,8 @@ class InfoSimulator:
         is_voting = False
         for ssn in self.red_agent.get_connections():
             green_agent = self.social_network[ssn]
-            green_agent.add_unert_values(amount, is_voting)
+            opinion_change = self.caculate_opinion_change(amount, green_agent.get_uncert_value())
+            green_agent.add_unert_values(opinion_change, is_voting)
 
 
     def blue_turn(self):
@@ -426,7 +444,7 @@ class InfoSimulator:
         for agent in self.social_network:
             visited.append(agent)
             # Mingle with eachother and effect opinions
-            is_voting = agent.get_vote_status()
+            agent_opinion = agent.get_vote_status()
             curr_agent_uncert = agent.get_uncert_value()
             for connection in agent.connections:
                 green_two = self.social_network[connection]
@@ -435,11 +453,17 @@ class InfoSimulator:
                     green_two_opinion = green_two.get_vote_status()
 
                     if curr_agent_uncert < green_two_uncert:
-                        opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
-                        green_two.add_unert_values(opinion_change, is_voting)
+                        if curr_agent_uncert == 0.00:
+                            continue
+                        else:
+                            opinion_change = round(self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)/2, 2)
+                            green_two.add_unert_values(opinion_change, agent_opinion)
                     else:
-                        opinion_change = self.caculate_opinion_change(green_two_uncert, curr_agent_uncert)
-                        agent.add_unert_values(opinion_change, green_two_opinion)
+                        if green_two_uncert == 0.00:
+                            continue
+                        else:
+                            opinion_change = round(self.caculate_opinion_change(green_two_uncert, curr_agent_uncert)/2, 2)                      
+                            agent.add_unert_values(opinion_change, green_two_opinion)
                     
                     
     def caculate_opinion_change(self, alpha: float, beta: float) -> float:
@@ -448,6 +472,8 @@ class InfoSimulator:
                 f(n) = 
                     (alpha + beta) if beta < 0.0
                     (alpha - beta) if beta >= 0.0
+                    (beta - alpha) if alpha > 0.0 and beta >= 0.0
+
                     
             Params:
                 alpha: float the uncertainty of the influencer
@@ -459,8 +485,10 @@ class InfoSimulator:
 
         if beta < 0.00:
             return round(alpha - beta, 2)
-        else:
+        elif beta >= 0.00 and alpha < 0.00:
             return round(alpha + beta, 2)
+        elif alpha > 0.00 and beta > 0.00:
+            return round(alpha - beta, 2)
 
 
     def lose_followers( self , percentage: int):

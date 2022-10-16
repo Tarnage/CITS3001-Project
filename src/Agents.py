@@ -69,7 +69,7 @@ class Grey_Agent(Agent):
 class Red_Agent(Agent):
     def __init__(self):
         super().__init__(team="red")
-        self.broadcast_options = [[0.00, 0.00], [-0.10, 0.00], [-0.20, -0.10], [-0.30, -0.20], [-0.40, -0.30], [-0.50, -0.40]]
+        self.broadcast_options = [[0.00, 0.00], [-0.10, -0.01], [-0.20, -0.10], [-0.30, -0.20], [-0.40, -0.30], [-0.50, -0.40]]
         self.followers = 0
         return
 
@@ -118,7 +118,7 @@ class Blue_Agent(Agent):
     def __init__(self):
         self.energy = 100
         self.used_grey_agent = False
-        self.opinion_gain = [[0.00, 0.00], [0.00, -0.20], [-0.10, -0.30], [-0.20, -0.40], [-0.30, -0.50], [-0.40, -0.50]]
+        self.opinion_gain = [[0.00, 0.00], [-0.10, -0.01], [-0.20, -0.10], [-0.30, -0.20], [-0.40, -0.30], [-0.50, -0.40]]
         super().__init__(team="blue")
 
     def get_energy(self) -> int:
@@ -151,7 +151,7 @@ class Blue_Agent(Agent):
     def set_used_grey(self):
         self.used_grey_agent = True
 
-    def get_opinion_gain(self, option: int, average = True) -> float:
+    def get_opinion_gain(self, option: int, average = False) -> float:
         result_range = self.opinion_gain[option]
         if average:
             return round((result_range[0]+result_range[1])/2, 2)
@@ -240,19 +240,19 @@ class Green_Agent(Agent):
         else:
             # The current green agent is being influenced by 
             # the side that they are currently on
-            # if prev_uncert < 0.00:
-            #     result = (self.uncert - value)
+            if prev_uncert < 0.00:
+                result = (self.uncert - value)
 
-            #     if result <= -1.00:
-            #         self.uncert = -1.00
-            #     else:
-            #         self.uncert = result
-            # else:
-            #     result = (self.uncert + value)
+                if result <= -1.00:
+                    self.uncert = -1.00
+                else:
+                    self.uncert = result
+            else:
+                result = (self.uncert + value)
 
-            #     if result >= 1.00:
-            #         self.uncert = -1.00
-            #     else:
-            #         self.uncert = result
+                if result >= 1.00:
+                    self.uncert = -1.00
+                else:
+                    self.uncert = result
             pass
             
