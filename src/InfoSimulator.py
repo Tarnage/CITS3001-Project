@@ -159,12 +159,14 @@ class InfoSimulator:
             logging.info(f"\t\tWill Vote: {self.num_will_vote}")
             logging.info(f"\t\tNot Vote: {self.num_not_vote}\n")
             logging.info(f"Turn: {self.num_turns+1}")
+            self.metrics.save_uncert_dist(self.social_network, filename, "Start", (self.num_turns))
             
 
             finished = False
 
             while not finished:
                 start = time.perf_counter()
+
                 # Updates and prints gloabl values before each turn
                 #self.metrics.display_connections(self.red_agent, self.blue_agent, self.social_network)
                 #time.sleep(2)
@@ -173,24 +175,26 @@ class InfoSimulator:
                     print("Red Agents Turn...")
                     self.red_turn()
                     #time.sleep(2)
-                    self.set_current_turn("blue")
                     self.update_vote_status()
                     self.print_vote_status()
                     self.log_current_votes()
+                    self.metrics.save_uncert_dist(self.social_network, filename, self.get_current_turn(), (self.num_turns//2)+1)
+                    self.set_current_turn("blue")
                 else:
                     logging.info("\tBlue Agents Turn:")
                     print("Blue Agents Turn...")
                     self.blue_turn()
                     #time.sleep(2)
-                    self.set_current_turn("red")
                     self.update_vote_status()
                     self.print_vote_status()
                     self.log_current_votes()
-                
+                    self.metrics.save_uncert_dist(self.social_network, filename, self.get_current_turn(), (self.num_turns//2)+1)
+                    self.set_current_turn("red")
+
                 self.increment_turns()
                 # Greens turn after red and blue have had their turns
-                if self.get_num_turns() % 2 == 0:
 
+                if self.get_num_turns() % 2 == 0 and not self.get_num_turns() == 0:
                     logging.info("\tGreen Agents Turn:")
                     print("Green Agents are interacting....")
                     #time.sleep(2)
@@ -198,6 +202,7 @@ class InfoSimulator:
                     self.update_vote_status()
                     self.print_vote_status()
                     self.log_current_votes()
+                    self.metrics.save_uncert_dist(self.social_network, filename, "green", (self.num_turns//2))
 
                     if self.grey_agent.is_active():
                         logging.info("\tThe Grey Agent is making its move:")
@@ -207,6 +212,7 @@ class InfoSimulator:
                         self.update_vote_status()
                         self.print_vote_status()
                         self.log_current_votes()
+                        self.metrics.save_uncert_dist(self.social_network, filename, "grey", (self.num_turns//2))
 
                         # Grey only can be used once
                         self.grey_agent.set_active(False)
@@ -220,6 +226,8 @@ class InfoSimulator:
                     else:
                         logging.info(f"Turn: {(self.num_turns//2)+1}")
 
+                
+
         except KeyboardInterrupt:
             print("Ending game...")
 
@@ -231,7 +239,7 @@ class InfoSimulator:
         logging.info(f"Game finished at turn: {(self.num_turns//2)+1}")
 
         # save the graph of the green uncertainties at the end of the game
-        self.metrics.save_uncert_dist(self.social_network, filename)
+        self.metrics.save_uncert_dist(self.social_network, filename, "End",(self.num_turns//2)+1)
 
         winner = ""
         if self.num_will_vote > self.num_not_vote:
@@ -350,19 +358,26 @@ class InfoSimulator:
 
     def green_turn(self):
         #set their current side
+        visited = []
         for agent in self.social_network:
+            visited.append(agent)
             # Mingle with eachother and effect opinions
             is_voting = agent.get_vote_status()
             curr_agent_uncert = agent.get_uncert_value()
             for connection in agent.connections:
                 green_two = self.social_network[connection]
-                # if agent is voting it will try to convince others to vote else if will try to convince
-                # changing the agents opinion
-                green_two_uncert = green_two.get_uncert_value()
-                opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
-                green_two.add_unert_values(opinion_change, is_voting)
+                if not green_two in visited:
+                    green_two_uncert = green_two.get_uncert_value()
+                    green_two_opinion = green_two.get_vote_status()
 
-
+                    if curr_agent_uncert < green_two_uncert:
+                        opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
+                        green_two.add_unert_values(opinion_change, is_voting)
+                    else:
+                        opinion_change = self.caculate_opinion_change(green_two_uncert, curr_agent_uncert)
+                        agent.add_unert_values(opinion_change, green_two_opinion)
+                    
+                    
     def caculate_opinion_change(self, alpha: float, beta: float) -> float:
         '''
             Formula: 
