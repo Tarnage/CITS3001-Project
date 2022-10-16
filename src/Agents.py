@@ -69,7 +69,8 @@ class Grey_Agent(Agent):
 class Red_Agent(Agent):
     def __init__(self):
         super().__init__(team="red")
-        self.broadcast_options = [[0.00, 0.00], [-0.10, 0.00], [-0.20, -0.10], [-0.30, -0.20], [-0.40, -0.30], [-0.50, -0.40]]
+        self.broadcast_options = [[0.00, 0.00], [-0.30, -0.10], [-0.50, -0.20], [-0.60, -0.30], [-0.70, -0.40], [-0.80, -0.60]]
+        self.Follower_Lost = [0.00, 0.05, 0.10, 0.15, 0.20, 0.25]
         self.followers = 0
         return
 
@@ -91,13 +92,9 @@ class Red_Agent(Agent):
         print("[4] cost: 30-40'%' followers")
         print("[5] cost: 40-50'%' followers")
 
-    def followers_lost(self, option: int, average = False) -> int:
+    def average_followers_lost(self, option: int) -> int:
         range = self.broadcast_options[option]
-        if average:
-            lost_followers = int((range[0]+range[1])/2 * self.followers) #gives average for simulation
-        else:
-            loss_percentage = self.get_rand(range, uniform= True)
-            lost_followers = int(self.followers * loss_percentage)
+        lost_followers = int(self.Follower_Lost[option] * self.followers) #gives average for simulation
         self.followers += lost_followers
         return lost_followers
 
@@ -108,7 +105,7 @@ class Red_Agent(Agent):
             amount = (range[0]+range[1])/2
         else:
             amount = self.get_rand(range, uniform= True)
-        return amount
+        return round(amount,2)
     
     
         
@@ -119,6 +116,7 @@ class Blue_Agent(Agent):
         self.energy = 100
         self.used_grey_agent = False
         self.opinion_gain = [[0.00, 0.00], [0.00, -0.20], [-0.10, -0.30], [-0.20, -0.40], [-0.30, -0.50], [-0.40, -0.50]]
+
         super().__init__(team="blue")
 
     def get_energy(self) -> int:
@@ -205,39 +203,48 @@ class Green_Agent(Agent):
             self.set_vote_status(False)
             self.uncert = not_vote
 
-    def add_unert_values(self, value: float, is_voting: bool):
-        prev_voting = self.get_vote_status()
-        prev_uncert = self.get_uncert_value()
+    def switching_sides(self, uncert: float):
+        switchside  = False
+        if rand.random() < uncert: 
+            switchside = True
+        return switchside
 
+
+    def add_unert_values(self, value: float, is_voting: bool):
+        #value is negative
+        prev_voting = self.get_vote_status()
         # # Update uncertainty values
         # self.update_uncert(round(value, 2))
 
         # An agent is being influenced to change their voting status
         if not prev_voting == is_voting:
 
-            if prev_uncert < 0.00:
-                result = (self.uncert - value)
+            #if prev_uncert < 0.00: #if they are certain, then ADD the value  to make them more uncertain
+            result = round((self.uncert - value),2)
 
-                if result <= -1.00:
-                    self.uncert = -1.00
-                else:
-                    self.uncert = result
+            if result >= 1.00:
+                self.uncert = 1.00 
             else:
-                result = (self.uncert + value)
+                self.uncert = result
+            
+            if self.uncert> 0 and self.switching_sides(self.uncert): #if they are feeling uncertain there is a chance they switch sides
+                self.set_vote_status(is_voting)
 
-                if result >= 1.00:
-                    self.uncert = -1.00
-                else:
-                    self.uncert = result
 
-            curr_uncert = self.uncert
+
+        else: #if they already are on the side
+            result = round((self.uncert + value),2)
+
+            if result <= -1.00:
+                self.uncert = -1.00
+            else:
+                self.uncert = result
 
             # agent was unsure of their voting status before and now is sure 
-            if prev_uncert >= curr_uncert and curr_uncert > 0.00:
-                self.set_vote_status(is_voting)
-                #print("Status Changed")
         
-        else:
+                #print("Status Changed")
+    
+       # else:
             # The current green agent is being influenced by 
             # the side that they are currently on
             # if prev_uncert < 0.00:
@@ -254,5 +261,5 @@ class Green_Agent(Agent):
             #         self.uncert = -1.00
             #     else:
             #         self.uncert = result
-            pass
+          #  pass
             

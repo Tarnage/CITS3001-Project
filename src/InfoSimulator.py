@@ -11,7 +11,6 @@ import math
 import os
 import sys
 
-
 def check_dir(peer_dir: str):
     ''' Helper to make sure temp directory exists if not create one
         Args;
@@ -85,9 +84,9 @@ class InfoSimulator:
             social_network.append(new_agent)
 
             # IF GREEN IS NOT VOTING IT IS A FOLLOWER OF RED
-            if new_agent.get_vote_status() == False:
-                self.red_agent.connections.append(i)
-                self.red_agent.increment_followers() #increment followers
+            # if new_agent.get_vote_status() == False:
+            self.red_agent.connections.append(i)
+            self.red_agent.increment_followers() #increment followers
 
             # BLUE HAS A CONNECTION TO EVERYONE
             self.blue_agent.connections.append(i)
@@ -338,13 +337,12 @@ class InfoSimulator:
 
         if self.red_agent.get_player():
             option = self.user_input("red")
-        else:
-            option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
-        
+        # else:
+        #     option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
+        option = 2
         print("Choosing option :" + str(option))
         # Lose Followers
-        lost = self.red_agent.followers_lost(option)
-        self.lose_followers(lost)
+        lost = self.lose_followers(option) #change this to a percentage amountS
 
         # Change remaining green opinion
         amount = self.red_agent.broadcast(option)
@@ -355,18 +353,14 @@ class InfoSimulator:
         
         
         if option > 0:
-            #self.red_change_opinion(amount)
-            self.change_opinion(amount , False)
+            self.red_change_opinion(amount)
+            #self.change_opinion(amount , False)
 
 
         return
 
 
-    def red_change_opinion(self, amount):
-        is_voting = False
-        for ssn in self.red_agent.get_connections():
-            green_agent = self.social_network[ssn]
-            green_agent.add_unert_values(amount, is_voting)
+
 
 
     def blue_turn(self):
@@ -427,15 +421,17 @@ class InfoSimulator:
             visited.append(agent)
             # Mingle with eachother and effect opinions
             is_voting = agent.get_vote_status()
-            curr_agent_uncert = agent.get_uncert_value()
+            curr_agent_uncert = round(agent.get_uncert_value(),2)
             for connection in agent.connections:
                 green_two = self.social_network[connection]
                 if not green_two in visited:
-                    green_two_uncert = green_two.get_uncert_value()
+                    green_two_uncert = round(green_two.get_uncert_value(),2)
                     green_two_opinion = green_two.get_vote_status()
+                    #green 1 has -.5 not voting and green 2 has 0.3 as voting . Because green 1 is more certain then green 2 we get  -.5 - .8 = +.3. ANd we make green 2 -0.2 about not voting 
+                    #green 1 has -.5 not voting and green 2 has -0.3 as voting . Because green 1 is more certain then green 2 we get  -.5 + .2 = -0.7. ANd we make green 2 -0.8 about not voting 
 
-                    if curr_agent_uncert < green_two_uncert:
-                        opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert)
+                    if curr_agent_uncert < green_two_uncert: #if current agent is more certain then its partner 
+                        opinion_change = self.caculate_opinion_change(curr_agent_uncert, green_two_uncert) #find the difference between their uncertainties 
                         green_two.add_unert_values(opinion_change, is_voting)
                     else:
                         opinion_change = self.caculate_opinion_change(green_two_uncert, curr_agent_uncert)
@@ -457,24 +453,31 @@ class InfoSimulator:
                 result: float value of how much alpha can influence beta
         '''
 
-        if beta < 0.00:
-            return round(alpha - beta, 2)
+        if beta > 0.00:
+            return round((alpha - beta)/100, 2)
         else:
-            return round(alpha + beta, 2)
+            return round((alpha + beta)/100, 2)
 
 
-    def lose_followers( self , percentage: int):
-        numA = len(self.red_agent.connections)
-
-        for i in range(int(numA*percentage/100)):
-            #just removing random agents for now
-            node = rand.randrange(numA)
-
-            if node in self.red_agent.get_connections():
-                self.red_agent.remove_connections(node)
+    def lose_followers( self , option: int):
+        amount_lost = 0
+        for i in self.red_agent.connections:
+            probability = round(self.red_agent.Follower_Lost[option],2)
+            node = self.social_network[i]
+            #Voting already - more certain, higher chance of being lost 
+            if node.get_vote_status(): #if they are voting
+                uncertainty = node.get_uncert_value()
+                probability -= uncertainty/8  #high uncertainty will raise the proability IF they are hella uncertain about voting they will stay 
+            #Not Voting - more certain less chance of being lost 
+            else:
+                uncertainty = node.get_uncert_value()
+                probability += uncertainty/8  #high uncertainty will decrease the proability ( )
+    
+            if (rand.random()< probability):
+                self.red_agent.remove_connections(i)
                 self.red_agent.decrement_followers()
-                print("RED LOST A FOLLOWER")
-        return
+                amount_lost += 1
+        return amount_lost
 
 
     def change_opinion(self, amount: float, is_voting: bool):
@@ -495,6 +498,20 @@ class InfoSimulator:
         print(f"Opinons Changed: {count}")
         return
 
+    def red_change_opinion(self, amount):
+        is_voting = False
+        count = 0
+
+        for ssn in self.red_agent.get_connections():
+            green_agent = self.social_network[ssn]
+            prev_voting = green_agent.get_vote_status()
+            green_agent.add_unert_values(amount, is_voting)
+            new_voting = green_agent.get_vote_status()
+            if not prev_voting == new_voting:
+                count += 1
+        logging.info(f"\t\tOpinions Changed: {count}")
+        return
+
 
 
     # Use this for the minimax it will return the number of greens that have chnaged their opinion
@@ -513,7 +530,7 @@ class InfoSimulator:
     def simulate_red_lost(self, red, option):
         #will need to do a deepcopy agent and so that different routes could be taken.
         # will use AVERAGE amounts (possibly take into consideration, min and max interval if we change it from a flat amount. )
-        red.followers_lost(option, average = True) 
+        red.average_followers_lost(option) 
         return red.broadcast(option, average = True) 
         
 
