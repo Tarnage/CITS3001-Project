@@ -213,36 +213,36 @@ class Green_Agent(Agent):
         return switchside
 
 
-    def add_unert_values(self, value: float, is_voting: bool):
-        #value is negative
-        prev_voting = self.get_vote_status()
-        # # Update uncertainty values
-        # self.update_uncert(round(value, 2))
+    # def add_unert_values(self, value: float, is_voting: bool):
+    #     #value is negative
+    #     prev_voting = self.get_vote_status()
+    #     # # Update uncertainty values
+    #     # self.update_uncert(round(value, 2))
 
-        # An agent is being influenced to change their voting status
-        if not prev_voting == is_voting:
+    #     # An agent is being influenced to change their voting status
+    #     if not prev_voting == is_voting:
 
-                                         #   if prev_uncert < 0.00: #if they are certain, then ADD the value  to make them more uncertain
-            result = round((self.uncert - value),2)#make them more uncertain
+    #                                      #   if prev_uncert < 0.00: #if they are certain, then ADD the value  to make them more uncertain
+    #         result = round((self.uncert - value),2)#make them more uncertain
 
-            if result >= 1.00:
-                self.uncert = 1.00 
-            else:
-                self.uncert = result
+    #         if result >= 1.00:
+    #             self.uncert = 1.00 
+    #         else:
+    #             self.uncert = result
             
-            if self.uncert> 0 and self.switching_sides(self.uncert): #if they are feeling uncertain there is a chance they switch sides
-                self.set_vote_status(is_voting)
-                self.uncert =round(-1 * self.uncert,2) #switch to the other side 
+    #         if self.uncert> 0 and self.switching_sides(self.uncert): #if they are feeling uncertain there is a chance they switch sides
+    #             self.set_vote_status(is_voting)
+    #             self.uncert =round(-1 * self.uncert,2) #switch to the other side 
 
 
 
-        else: #if they already are on the side
-            result = round((self.uncert + value),2) #make them more certain
+    #     else: #if they already are on the side
+    #         result = round((self.uncert + value),2) #make them more certain
 
-            if result <= -1.00:
-                self.uncert = -1.00
-            else:
-                self.uncert = result
+    #         if result <= -1.00:
+    #             self.uncert = -1.00
+    #         else:
+    #             self.uncert = result
 
             # agent was unsure of their voting status before and now is sure 
         
@@ -267,3 +267,34 @@ class Green_Agent(Agent):
             #         self.uncert = result
           #  pass
             
+
+
+    def add_unert_values(self, value: float, is_voting: bool):
+        prev_voting = self.get_vote_status()
+        # Update uncertainty values
+        #self.update_uncert(round(value, 2))
+
+        # An agent is being influenced to change their voting status
+        if not (prev_voting == is_voting):
+
+            #   if prev_uncert < 0.00: #if they are certain, then ADD the value  to make them more uncertain
+            result = round((value - self.uncert),2)#make them more uncertain
+
+            if result >= 1.00:
+                self.uncert = 1.00 
+            else:
+                self.uncert = result
+            
+            if self.uncert> 0.00:
+                self.set_vote_status(is_voting)
+
+        else:
+            #   if prev_uncert < 0.00: #if they are certain, then ADD the value  to make them more uncertain
+            result = round((self.uncert + value),2)#make them more uncertain
+
+            if result <= -1.00:
+                self.uncert = -1.00 
+            else:
+                self.uncert = result
+
+        return
