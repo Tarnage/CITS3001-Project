@@ -766,7 +766,7 @@ class InfoSimulator:
         
         else:
             value =  - math.inf
-            choic =  rand.randint(0,5)
+            choices =  rand.randint(0,5)
             for option in range(len(blue.opinion_gain) -1): 
                 green_Copy = copy.deepcopy(green)
                 blue_Copy = copy.deepcopy(blue)
@@ -781,7 +781,7 @@ class InfoSimulator:
                         choice = option
                     else:
                         choice = new_score[0]
-            return (choic, value)
+            return (choices, value)
         
 
 
