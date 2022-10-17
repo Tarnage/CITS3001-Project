@@ -73,6 +73,7 @@ class Metrics:
         plt.pause(0.01)
 
     def save_uncert_dist(self, network: list, filename: str, player: str, turn: int) -> None:
+        return
         graphs_dir = f'./graphs/Game_{filename}'
 
         self.check_dir(graphs_dir)
