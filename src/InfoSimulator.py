@@ -372,7 +372,6 @@ class InfoSimulator:
         if self.red_agent.get_player():
             option = self.user_input("red")
         else:
-            pass
             option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         
        # option = 2
