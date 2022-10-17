@@ -478,7 +478,7 @@ class InfoSimulator:
                 uncertainty = node.get_uncert_value()
                 probability -= uncertainty/8  #high uncertainty will raise the proability IF they are hella uncertain about voting they will stay 
             #Not Voting - more certain less chance of being lost 
-            else:
+            else: #if they are not voing
                 uncertainty = node.get_uncert_value()
                 probability += uncertainty/8  #high uncertainty will decrease the proability ( )
     
