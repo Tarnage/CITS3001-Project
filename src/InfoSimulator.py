@@ -206,7 +206,7 @@ class InfoSimulator:
                 #time.sleep(2)
                 if self.get_current_turn() == "red":
                     logging.info("\tRed Agents Turn:")
-                    print("Red Agents Turn...")
+                    print("\nRed Agents Turn...")
                     self.red_turn()
                     #time.sleep(2)
                     self.update_vote_status()
@@ -216,7 +216,7 @@ class InfoSimulator:
                     self.set_current_turn("blue")
                 else:
                     logging.info("\tBlue Agents Turn:")
-                    print("Blue Agents Turn...")
+                    print("\nBlue Agents Turn...")
                     self.blue_turn()
                     #time.sleep(2)
                     self.update_vote_status()
@@ -230,7 +230,7 @@ class InfoSimulator:
 
                 if self.get_num_turns() % 2 == 0 and not self.get_num_turns() == 0:
                     logging.info("\tGreen Agents Turn:")
-                    print("Green Agents are interacting....")
+                    print("\nGreen Agents are interacting....")
                     #time.sleep(2)
                     self.before_interaction = self.num_will_vote
                     self.green_turn()
@@ -243,7 +243,7 @@ class InfoSimulator:
 
                     if self.grey_agent.is_active():
                         logging.info("\tThe Grey Agent is making its move:")
-                        print("Grey Agent Turn:")
+                        print("\nGrey Agent Turn:")
                         #time.sleep(2)
                         self.grey_turn()
                         self.update_vote_status()
@@ -400,7 +400,7 @@ class InfoSimulator:
 
 
     def blue_turn(self):
-        print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
+        print("Blue energy: " + str(self.blue_agent.get_energy()))
         
         option = -1
 
@@ -478,8 +478,8 @@ class InfoSimulator:
         '''
             Formula: 
                 f(n) = 
-                    (alpha + beta) if beta < 0.0
-                    (alpha - beta) if beta >= 0.0
+                    (alpha + beta) if beta > 0.0
+                    (alpha - beta) if beta <= 0.0
                     
             Params:
                 alpha: float the uncertainty of the influencer
@@ -489,10 +489,10 @@ class InfoSimulator:
                 result: float value of how much alpha can influence beta
         '''
         #TODO: Nerf and buff this based on the number of green. This seems decent so *10 / num of people. 
-        if beta > 0.00:
-            return round((alpha - beta)*20/self.n, 2)
+        if beta < 0.00:
+            return round((alpha + beta)*10/self.n, 2)
         else:
-            return round((alpha + beta)*20/self.n, 2)
+            return round((alpha - beta)*10/self.n, 2)
 
 
     def lose_followers( self , option: int):
