@@ -263,18 +263,36 @@ class InfoSimulator:
         # save the graph of the green uncertainties at the end of the game
         self.metrics.save_uncert_dist(self.social_network, filename, "End",(self.num_turns//2)+1)
 
+        final_num_will = 0
+        final_num_not = 0
+        final_num_uncertain = 0
+
+        for agent in self.social_network:
+            if agent.get_vote_status() == True and agent.get_uncert_value() < 0.00:
+                final_num_will += 1
+            elif agent.get_vote_status() == False and agent.get_uncert_value() < 0.00:
+                final_num_not += 1
+            else:
+                final_num_uncertain += 1
+
         winner = ""
-        if self.num_will_vote > self.num_not_vote:
+        if final_num_will > final_num_not:
             winner = "BLUE"
-        elif self.num_will_vote < self.num_not_vote:
+        elif final_num_will < final_num_not:
             winner = "RED"
         else:
             print("ITS A TIE!")
             logging.info(f'TIE')
+            logging.info(f"Will Vote: {final_num_will}")
+            logging.info(f"Not Vote: {final_num_not}")
+            logging.info(f"Uncertain: {final_num_uncertain}")
             exit(0)
 
         print(f"{winner} AGENT WINS!!")
         logging.info(f'{winner}')
+        logging.info(f"Will Vote: {final_num_will}")
+        logging.info(f"Not Vote: {final_num_not}")
+        logging.info(f"Uncertain: {final_num_uncertain}")
         exit(0)
 
 
