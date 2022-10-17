@@ -8,7 +8,7 @@ class TestGreenAgents(unittest.TestCase):
         self.broad_interval = [-0.5, 0.5]
         self.connect_prob_1 = [10, 0.4] # I think if I can remember probability! the probroablity of num_greens knowing each other is 50%
         self.grey_proportion_low = 0.1 # 10% chance grey is working for Red team
-        self.sim = InfoSimulator(self.broad_interval, self.connect_prob_1[0], self.connect_prob_1[1], self.grey_proportion_low)
+        self.sim = InfoSimulator(self.broad_interval, self.connect_prob_1[0], self.connect_prob_1[1], self.grey_proportion_low, simulate=True)
 
         self.blue = self.sim.blue_agent
         self.red = self.sim.red_agent
@@ -84,6 +84,27 @@ class TestGreenAgents(unittest.TestCase):
         voting = self.green_one.get_vote_status()
         self.assertEqual(voting, green_voting, "Green no change")
         self.assertAlmostEqual(uncert, 0.0, msg="Green no change")
+
+    def test_both_positive_uncerts(self):
+
+        alpha = 0.2
+        red_voting = True
+        beta = 0.3
+        green_voting = True
+        self.green_one.uncert = beta
+        self.green_one.voting = green_voting
+        
+        result = self.sim.caculate_opinion_change(alpha, beta)
+        self.assertAlmostEqual(result, -0.1)
+
+        self.green_one.add_unert_values(result, red_voting)
+        uncert = self.green_one.get_uncert_value()
+
+        self.assertAlmostEqual(uncert, 0.2, msg="Failed to add the proper uncertainty")
+
+        voting = self.green_one.get_vote_status()
+        self.assertEqual(voting, green_voting, "Green no change")
+        self.assertAlmostEqual(uncert, 0.2, msg="Green no change")
 
 
 
