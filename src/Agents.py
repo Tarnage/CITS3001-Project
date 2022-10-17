@@ -69,12 +69,12 @@ class Grey_Agent(Agent):
 class Red_Agent(Agent):
     def __init__(self):
         super().__init__(team="red")
-        self.broadcast_options = [[0.00, 0.00], [-0.30, -0.10], [-0.50, -0.20], [-0.60, -0.30], [-0.70, -0.40], [-0.80, -0.60]]
-        self.Follower_Lost = [0.00, 0.05, 0.10, 0.15, 0.20, 0.25]
+        self.broadcast_options = [[0.00, 0.00], [-0.30, -0.10], [-0.50, -0.20], [-0.60, -0.30], [-0.70, -0.40], [-0.80, -0.60] ,[-0.80, -0.60]]
+        self.Follower_Lost = [0.00, 0.05, 0.10, 0.15, 0.20, 0.25,0.30]
         self.followers = 0
         self.goingFirst = True
         self.estimated_blue_energy= 100
-        self.estimated_influential_percentage =0
+        self.estimated_influential_percentage = 0.5
         return
 
     def increment_followers(self):
@@ -96,7 +96,6 @@ class Red_Agent(Agent):
         print("[5] cost: 40-50'%' followers")
 
     def average_followers_lost(self, option: int) -> int:
-        range = self.broadcast_options[option]
         lost_followers = int(self.Follower_Lost[option] * self.followers) #gives average for simulation
         self.followers += lost_followers
         return lost_followers
@@ -120,6 +119,8 @@ class Blue_Agent(Agent):
         self.used_grey_agent = False
         self.opinion_gain = [[0.00, 0.00], [0.00, -0.20], [-0.10, -0.30], [-0.20, -0.40], [-0.30, -0.50], [-0.40, -0.50]]
         self.goingFirst = True
+        self.estimated_red_loss = 0
+        self.estimated_influential_percentage = 0.5
         super().__init__(team="blue")
 
     def get_energy(self) -> int:
