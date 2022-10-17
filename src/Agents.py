@@ -111,7 +111,20 @@ class Red_Agent(Agent):
         return amount
     
     
-        
+    def has_lost_a_follower(self, option: float, chance: float, voting: float):
+
+        # if green is currently voting red has a higher chance of losing them as a follower
+        # The more uncertain a green agent is about their current voting status the 
+        probability = 0
+        if voting:
+            probability = abs(round(option + chance, 2))
+        else:
+            probability = abs(round(option - chance, 2))
+
+        if self.get_rand() <= probability:
+            return True
+        else:
+            return False
 
 
 class Blue_Agent(Agent):
