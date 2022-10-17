@@ -35,6 +35,8 @@ def usage(prog):
     print("\t-s --simulate\twill run simulations and save any outputs to the logs and graphs folder\n")
     print("\t-t --tight\twill inititate the game with [-0.9, 0.1] intervals\n")
     print("\t-b --broad\twill inititate the game with [-0.5, 0.5] intervals\n")
+    print("\t-n --number\tThis option must be used with the '-p' option. <1...> Is the number of green agents\n")
+    print("\t-p --probablity\tThis option must be used with the '-n' option. <1-100> Is the probabilty of green having a connection with another green agent\n")
 
 
 if __name__ == "__main__":
@@ -50,11 +52,17 @@ if __name__ == "__main__":
     grey_proportion_high = 0.8 # 80% chance grey is working for Red team
     grey_proportion_low = 0.1 # 10% chance grey is working for Red team
 
+
+    custom_n = False
+    custom_p = False
+    n = 0
+    p = 0
+
     default_option = ''
 
     simulate = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hstbn:p:", ["help", "simulate", "tight", "broad"])
+        opts, args = getopt.getopt(sys.argv[1:], "hstbn:p:", ["help", "simulate", "tight", "broad", "number", "probability"])
         prog = sys.argv[0]
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -73,9 +81,18 @@ if __name__ == "__main__":
             default_option = 'tight'
         elif o in ("-b", '--broad'):
             default_option = 'broad'
+        elif o in ("-n", 'number'):
+            n = int(a)
+            custom_p = True
+        elif o in ("-p", "probability"):
+            p = int(a)
+            custom_n = True
         else:
             assert False, "unhandled option"
 
+    if not (custom_p == custom_n):
+        usage()
+        sys.exit()
 
     if simulate:
         # Redirecting the print function to the void
@@ -86,6 +103,9 @@ if __name__ == "__main__":
         sim.run()
     elif default_option == 'broad':
         sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
+        sim.run()
+    elif custom_n and custom_p:
+        sim = InfoSimulator(broad_interval, n, p, grey_proportion_low, simulate=simulate)
         sim.run()
     else:
         sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
