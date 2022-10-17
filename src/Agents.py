@@ -74,7 +74,7 @@ class Red_Agent(Agent):
         self.followers = 0
         self.goingFirst = True
         self.estimated_blue_energy= 100
-        self.estimated_influential_percentage =0
+        self.estimated_influential_percentage = 0.5
         return
 
     def increment_followers(self):

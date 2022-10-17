@@ -70,6 +70,8 @@ class InfoSimulator:
         
         self.previous_change_toBlue = 0
         self.previous_change_toRed = 0
+        self.before_interaction = 0 
+        self.after_interaction = 0
         # Create a graph for modelling
         self.model = nx.Graph()
         self.social_network = self.create_green_agents(uncert_ints, n, p)
@@ -230,7 +232,10 @@ class InfoSimulator:
                     logging.info("\tGreen Agents Turn:")
                     print("Green Agents are interacting....")
                     #time.sleep(2)
+                    self.before_interaction = self.num_will_vote
                     self.green_turn()
+                    self.after_interaction = self.num_will_vote
+                    self.red_estimates()
                     self.update_vote_status()
                     self.print_vote_status()
                     self.log_current_votes()
@@ -367,10 +372,10 @@ class InfoSimulator:
             option = self.user_input("red")
         else:
             pass
-            #option = self.red_decision()
-        #     option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
+            option = self.red_decision()
+            # option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         
-        option = 2
+       # option = 2
         print("Choosing option :" + str(option))
         # Lose Followers
         lost = self.lose_followers(option) #change this to a percentage amountS
@@ -485,9 +490,9 @@ class InfoSimulator:
         '''
         #TODO: Nerf and buff this based on the number of green. This seems decent so *10 / num of people. 
         if beta > 0.00:
-            return round((alpha - beta)*10/self.n, 2)
+            return round((alpha - beta)*20/self.n, 2)
         else:
-            return round((alpha + beta)*10/self.n, 2)
+            return round((alpha + beta)*20/self.n, 2)
 
 
     def lose_followers( self , option: int):
@@ -519,7 +524,7 @@ class InfoSimulator:
         count = 0
         for agent in self.social_network:
             prev_voting = agent.get_vote_status()
-            agent.add_unert_values(amount, is_voting)
+            agent.add_unert_values(amount*2, is_voting)
             new_voting = agent.get_vote_status()
 
             if not prev_voting == new_voting:
@@ -527,7 +532,7 @@ class InfoSimulator:
         
         logging.info(f"\t\tOpinons Changed: {count}")
         print(f"Opinons Changed: {count}")
-        return
+        return count
 
     def red_change_opinion(self, amount):
         is_voting = False
@@ -536,7 +541,7 @@ class InfoSimulator:
         for ssn in self.red_agent.get_connections():
             green_agent = self.social_network[ssn]
             prev_voting = green_agent.get_vote_status()
-            green_agent.add_unert_values(amount, is_voting)
+            green_agent.add_unert_values(amount*2, is_voting)
             new_voting = green_agent.get_vote_status()
             if not prev_voting == new_voting:
                 count += 1
@@ -545,26 +550,28 @@ class InfoSimulator:
         return count
 
     def red_estimates(self):
-        estimated = [0,0.1,0.2,0.3,0.4,0.5]
-        self.red_agent.estimated_blue_energy = self.previous_change_toBlue/self.n  #can make this more adept
+        self.red_agent.estimated_blue_energy -= round(self.previous_change_toBlue/(self.n*2),2)  #can make this more adept
+        previousPercent = round(10*(self.before_interaction - self.after_interaction)/100,2) #people who got converted to not voting
+        self.red_agent.estimated_influential_percentage = self.red_agent.estimated_influential_percentage + previousPercent
 
-
-        pass #update reds estimates according to previous round
-            #update reds amount of possible influential agents
+        #update reds estimates according to previous round
+        #update reds amount of possible influential agents
 
     def red_decision(self):
-        if self.winningTeam == "RED":
-            agression = 0 #starts conservative #agression can be on a scale of 0-60 
+        if self.winningTeam() == "RED":
+            agression = 0 #starts conservative #agression can be on a scale of 0-50
             agression += round(self.red_agent.estimated_blue_energy * 20 / 100,2) # mildy the more energy blue hass
             agression -= round(self.red_agent.estimated_influential_percentage * 60,2) #the less influential the followers are the more agressive it should play. Game is about having good followers
-        else: #reds losing
-            agression = 60
-            agression -= round(self.red_agent.estimated_blue_energy *20/100,2) #less energy blue has be more agressive
-            agression -= round(self.red_agent.estimated_influential_percentage *60,2) #be more agressive if you have a smaller percentage of influential voter
-
-        option = agression//6
-        return option
     
+        else: #reds losing
+            agression = 50
+            agression -= round(self.red_agent.estimated_blue_energy *20/100,2) #less energy blue has be more agressive
+            # agression -= round(self.red_agent.estimated_influential_percentage *60,2) #be more agressive if you have a smaller percentage of influential voter
+        option = int(round(agression/10))
+        logging.info(f"\t\tAggression: {agression} with {option}\n")
+
+        return option
+        
     def winningTeam(self): 
         winner = ""
         if self.num_will_vote > self.num_not_vote:
