@@ -551,7 +551,8 @@ class InfoSimulator:
 
     def red_estimates(self):
         self.red_agent.estimated_blue_energy -= round(self.previous_change_toBlue/(self.n*2),2)  #can make this more adept
-        previousPercent = round(10*(self.before_interaction - self.after_interaction)/100,2) #people who got converted to not voting
+        previousPercent = (self.before_interaction - self.after_interaction)/self.n
+        # previousPercent = round(100000*(,2) #people who got converted to not voting
         self.red_agent.estimated_influential_percentage = self.red_agent.estimated_influential_percentage + previousPercent
 
         #update reds estimates according to previous round
@@ -561,12 +562,12 @@ class InfoSimulator:
         if self.winningTeam() == "RED":
             agression = 0 #starts conservative #agression can be on a scale of 0-50
             agression += round(self.red_agent.estimated_blue_energy * 20 / 100,2) # mildy the more energy blue hass
-            agression -= round(self.red_agent.estimated_influential_percentage * 60,2) #the less influential the followers are the more agressive it should play. Game is about having good followers
+            agression -= round(self.red_agent.estimated_influential_percentage * 50,2) #the less influential the followers are the more agressive it should play. Game is about having good followers
     
         else: #reds losing
             agression = 50
             agression -= round(self.red_agent.estimated_blue_energy *20/100,2) #less energy blue has be more agressive
-            # agression -= round(self.red_agent.estimated_influential_percentage *60,2) #be more agressive if you have a smaller percentage of influential voter
+            agression -= round(self.red_agent.estimated_influential_percentage *50,2) #be more agressive if you have a smaller percentage of influential voter
         option = int(round(agression/10))
         logging.info(f"\t\tAggression: {agression} with {option}\n")
 
