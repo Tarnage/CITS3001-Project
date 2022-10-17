@@ -484,7 +484,7 @@ class InfoSimulator:
                 result: float value of how much alpha can influence beta
         '''
         #TODO: Nerf and buff this based on the number of green. This seems decent so *10 / num of people. 
-        if beta > 0.00:
+        if beta < 0.00:
             return round((alpha + beta)*10/self.n, 2)
         else:
             return round((alpha - beta)*10/self.n, 2)
