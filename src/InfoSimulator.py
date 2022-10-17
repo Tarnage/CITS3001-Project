@@ -366,10 +366,11 @@ class InfoSimulator:
         if self.red_agent.get_player():
             option = self.user_input("red")
         else:
-            option = self.red_decision()
+            pass
+            #option = self.red_decision()
         #     option = self.minimaxRed(self.social_network, self.blue_agent, self.red_agent, 1, True)[0]
         
-        #option = 2
+        option = 2
         print("Choosing option :" + str(option))
         # Lose Followers
         lost = self.lose_followers(option) #change this to a percentage amountS
@@ -575,7 +576,7 @@ class InfoSimulator:
         return winner
     
     def influential_side(self):
-
+        pass
 
     
 
