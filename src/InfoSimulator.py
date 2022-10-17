@@ -473,8 +473,8 @@ class InfoSimulator:
         '''
             Formula: 
                 f(n) = 
-                    (alpha + beta) if beta < 0.0
-                    (alpha - beta) if beta >= 0.0
+                    (alpha + beta) if beta > 0.0
+                    (alpha - beta) if beta <= 0.0
                     
             Params:
                 alpha: float the uncertainty of the influencer
@@ -485,9 +485,9 @@ class InfoSimulator:
         '''
         #TODO: Nerf and buff this based on the number of green. This seems decent so *10 / num of people. 
         if beta > 0.00:
-            return round((alpha - beta)*10/self.n, 2)
-        else:
             return round((alpha + beta)*10/self.n, 2)
+        else:
+            return round((alpha - beta)*10/self.n, 2)
 
 
     def lose_followers( self , option: int):
