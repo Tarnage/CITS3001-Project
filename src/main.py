@@ -31,8 +31,10 @@ def usage(prog):
     print("\tThe purpose of this program is to simulate a Red vs. Blue scenerio where information is the main weapon")
     print("Option")
     print("\tIf no options are used default intervals, grey proportion and connection probablities will be applied will be applied\n")
-    print("\t-h\tdisplay this help and exit\n")
-    print("\t-s\twill run simulations and save any outputs to the logs and graphs folder\n")
+    print("\t-h --help\tdisplay this help and exit\n")
+    print("\t-s --simulate\twill run simulations and save any outputs to the logs and graphs folder\n")
+    print("\t-t --tight\twill inititate the game with [-0.9, 0.1] intervals\n")
+    print("\t-b --broad\twill inititate the game with [-0.5, 0.5] intervals\n")
 
 
 if __name__ == "__main__":
@@ -52,7 +54,7 @@ if __name__ == "__main__":
 
     simulate = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hstb", ["help", "simulate", "tight", "broad"])
+        opts, args = getopt.getopt(sys.argv[1:], "hstbn:p:", ["help", "simulate", "tight", "broad"])
         prog = sys.argv[0]
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -79,15 +81,16 @@ if __name__ == "__main__":
         # Redirecting the print function to the void
         sys.stdout = open(os.devnull, 'w')
 
-        if default_option == 'tight':
-            sim = InfoSimulator(tight_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
-            sim.run()
-        elif default_option == 'broad':
-            sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
-            sim.run()
-    else:
-        sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low)
+    if default_option == 'tight':
+        sim = InfoSimulator(tight_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
         sim.run()
+    elif default_option == 'broad':
+        sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
+        sim.run()
+    else:
+        sim = InfoSimulator(broad_interval, connect_prob_1[0], connect_prob_1[1], grey_proportion_low, simulate=simulate)
+        sim.run()
+
     #sim.print_distrubution_graph(display="distribution")
     #sim.print_distrubution_graph(display="graph")
 
