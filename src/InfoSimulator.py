@@ -361,31 +361,48 @@ class InfoSimulator:
             option = rand.randint(0, 5)
         
         print("Choosing option :" + str(option))
-        # Lose Followers
-        lost = self.red_agent.followers_lost(option)
-        self.lose_followers(lost)
+
+
+        followers_start = self.red_agent.get_followers()
+        #self.lose_followers(lost)
 
         # Change remaining green opinion
         amount = self.red_agent.broadcast(option)
 
+        num_green_influenced = 0
+        if option > 0:
+            num_green_influenced = self.red_change_opinion(amount)
+            #self.change_opinion(amount , False)
+
+        followers_after = self.red_agent.get_followers()
+
         logging.info(f"\t\tUsing Option: {option}")
         logging.info(f"\t\tUncertainty: {amount}")
-        logging.info(f"\t\tFollowers Lost: {lost}")
-        
-        
-        if option > 0:
-            self.red_change_opinion(amount)
-            #self.change_opinion(amount , False)
+        logging.info(f"\t\tFollowers Lost: {followers_start - followers_after}")
+        logging.info(f"\t\tNumber of Interactions: {num_green_influenced}")
+
         return
 
 
     def red_change_opinion(self, amount):
+        count = 0
         is_voting = False
         for ssn in self.red_agent.get_connections():
             green_agent = self.social_network[ssn]
-            opinion_change = self.caculate_opinion_change(amount, green_agent.get_uncert_value())
-            green_agent.add_unert_values(opinion_change, is_voting)
+            green_agent_uncert = green_agent.get_uncert_value()
+            green_agent_voting = green_agent.get_vote_status()
 
+            lost_follower = self.red_agent.has_lost_a_follower(amount, green_agent_uncert, green_agent_voting)
+
+            if not lost_follower:
+                count += 1
+                opinion_change = self.caculate_opinion_change(amount, green_agent_uncert)
+                green_agent.add_unert_values(opinion_change, is_voting)
+            else:
+                self.red_agent.remove_connections(ssn)
+                self.red_agent.decrement_followers()
+
+        return count
 
     def blue_turn(self):
         print("current blue energy = " + str(self.blue_agent.get_energy()) + "\n")
