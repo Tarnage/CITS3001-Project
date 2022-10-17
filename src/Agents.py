@@ -72,6 +72,9 @@ class Red_Agent(Agent):
         self.broadcast_options = [[0.00, 0.00], [-0.30, -0.10], [-0.50, -0.20], [-0.60, -0.30], [-0.70, -0.40], [-0.80, -0.60]]
         self.Follower_Lost = [0.00, 0.05, 0.10, 0.15, 0.20, 0.25]
         self.followers = 0
+        self.goingFirst = True
+        self.estimated_blue_energy= 100
+        self.estimated_influential_percentage =0
         return
 
     def increment_followers(self):
@@ -116,7 +119,7 @@ class Blue_Agent(Agent):
         self.energy = 100
         self.used_grey_agent = False
         self.opinion_gain = [[0.00, 0.00], [0.00, -0.20], [-0.10, -0.30], [-0.20, -0.40], [-0.30, -0.50], [-0.40, -0.50]]
-
+        self.goingFirst = True
         super().__init__(team="blue")
 
     def get_energy(self) -> int:
@@ -219,8 +222,8 @@ class Green_Agent(Agent):
         # An agent is being influenced to change their voting status
         if not prev_voting == is_voting:
 
-            #if prev_uncert < 0.00: #if they are certain, then ADD the value  to make them more uncertain
-            result = round((self.uncert - value),2)
+                                         #   if prev_uncert < 0.00: #if they are certain, then ADD the value  to make them more uncertain
+            result = round((self.uncert - value),2)#make them more uncertain
 
             if result >= 1.00:
                 self.uncert = 1.00 
@@ -229,11 +232,12 @@ class Green_Agent(Agent):
             
             if self.uncert> 0 and self.switching_sides(self.uncert): #if they are feeling uncertain there is a chance they switch sides
                 self.set_vote_status(is_voting)
+                self.uncert =round(-1 * self.uncert,2) #switch to the other side 
 
 
 
         else: #if they already are on the side
-            result = round((self.uncert + value),2)
+            result = round((self.uncert + value),2) #make them more certain
 
             if result <= -1.00:
                 self.uncert = -1.00
