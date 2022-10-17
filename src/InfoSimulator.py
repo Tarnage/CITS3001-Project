@@ -765,8 +765,10 @@ class InfoSimulator:
         
         else:
             value =  - math.inf
-            choices =  rand.randint(0,5)
-            for option in range(len(blue.opinion_gain) -1): 
+            choices =  rand.randint(0,6)
+            if self.blue_agent.used_grey():
+                choices =  rand.randint(0,5)
+            for option in range(len(blue.opinion_gain)): 
                 green_Copy = copy.deepcopy(green)
                 blue_Copy = copy.deepcopy(blue)
                 opinion_change = self.simulate_blue_energy(blue_Copy, option)
