@@ -6,7 +6,6 @@ import Metrics
 import time
 import copy
 import logging
-from datetime import datetime
 import math
 import os
 import sys

@@ -1,5 +1,4 @@
 import random as rand
-from datetime import datetime
 
 SEED_ONE = 1234
 SEED_TWO = 4321
